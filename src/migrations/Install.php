@@ -5,6 +5,7 @@ namespace ether\utilitybelt\migrations;
 use craft\db\Migration;
 use craft\db\Table;
 use ether\utilitybelt\services\Revalidator;
+use yii\db\Exception;
 
 class Install extends Migration
 {
@@ -14,37 +15,47 @@ class Install extends Migration
 		// Revalidator
 		// ---------------------------------------------------------------------
 
-		$this->createTable(
-			Revalidator::$tableName,
-			[ 'jobId' => $this->integer(11) ]
-		);
+		try {
+			$this->createTable(
+				Revalidator::$tableName,
+				['jobId' => $this->integer(11)]
+			);
 
-		$this->addForeignKey(
-			null,
-			Revalidator::$tableName,
-			['jobId'],
-			Table::QUEUE,
-			['id'],
-			'CASCADE'
-		);
+			$this->addForeignKey(
+				null,
+				Revalidator::$tableName,
+				['jobId'],
+				Table::QUEUE,
+				['id'],
+				'CASCADE'
+			);
+		} catch (Exception $exception) {
+			if (!str_contains($exception->getMessage(), 'SQLSTATE[42S01]'))
+				throw $exception;
+		}
 
-		$this->createTable(
-			Revalidator::$urisTableName,
-			[
-				'id' => $this->primaryKey(),
-				'uri' => $this->string(),
-				'sectionId' => $this->integer(11),
-			]
-		);
+		try {
+			$this->createTable(
+				Revalidator::$urisTableName,
+				[
+					'id'        => $this->primaryKey(),
+					'uri'       => $this->string(),
+					'sectionId' => $this->integer(11),
+				]
+			);
 
-		$this->addForeignKey(
-			null,
-			Revalidator::$urisTableName,
-			['sectionId'],
-			Table::SECTIONS,
-			['id'],
-			'CASCADE'
-		);
+			$this->addForeignKey(
+				null,
+				Revalidator::$urisTableName,
+				['sectionId'],
+				Table::SECTIONS,
+				['id'],
+				'CASCADE'
+			);
+		} catch (Exception $exception) {
+			if (!str_contains($exception->getMessage(), 'SQLSTATE[42S01]'))
+				throw $exception;
+		}
 	}
 
 	public function safeDown (): bool

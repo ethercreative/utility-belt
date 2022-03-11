@@ -1,0 +1,29 @@
+{
+  "name": "ether/utility-belt",
+  "description": "A collection of things we use on every Craft CMS site",
+  "version": "0.0.1",
+  "type": "craft-plugin",
+  "license": "GPL-3.0-or-later",
+  "minimum-stability": "dev",
+  "require": {
+    "craftcms/cms": "^3.7",
+    "ether/logs": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "ether\\utilitybelt\\": "src/"
+    }
+  },
+  "support": {
+    "source": "https://github.com/ethercreative/utility-belt",
+    "issues": "https://github.com/ethercreative/utility-belt/issues"
+  },
+  "extra": {
+    "handle": "utility-belt",
+    "name": "Utility Belt",
+    "developer": "Ether Creative",
+    "developerUrl": "https://ethercreative.co.uk",
+    "class": "ether\\utilitybelt\\UtilityBelt",
+    "schemaVersion": "0.0.1"
+  }
+}

@@ -29,6 +29,7 @@ module.exports = {
 ```
 
 ```dotenv
+# .env
 ALLOWED_FRAME_ANCESTORS=https://dev.mysite.com
 ```
 

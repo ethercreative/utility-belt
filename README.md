@@ -22,6 +22,14 @@ Calls the `api/revalidate` Next JS endpoint.
 Requires the `FRONTEND_URL` env var.  
 Requires the `REVALIDATE_TOKEN` env var, that must match the token on the frontend.
 
+### Internal URLs
+
+Converts any absolute internal urls (based off `href^=@web`) to relative URIs.
+
+### Inline SVGs
+
+Assets with the `.svg` extension will return the contents of the SVG in the `svg` field on the asset in GraphQL.
+
 ## Environment Variables
 
 ```dotenv

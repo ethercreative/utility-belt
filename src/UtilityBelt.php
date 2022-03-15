@@ -4,14 +4,18 @@ namespace ether\utilitybelt;
 
 use Craft;
 use craft\base\Plugin;
+use craft\elements\Asset;
+use craft\events\DefineGqlTypeFieldsEvent;
 use craft\events\ExecuteGqlQueryEvent;
 use craft\events\PluginEvent;
+use craft\gql\TypeManager;
 use craft\helpers\App;
 use craft\helpers\Json;
 use craft\services\Gql;
 use craft\services\Plugins;
 use ether\utilitybelt\services\LivePreview;
 use ether\utilitybelt\services\Revalidator;
+use GraphQL\Type\Definition\Type;
 use yii\base\Event;
 
 /**
@@ -51,6 +55,12 @@ class UtilityBelt extends Plugin
 			[$this, 'onAfterExecuteGqlQuery']
 		);
 
+		Event::on(
+			TypeManager::class,
+			TypeManager::EVENT_DEFINE_GQL_TYPE_FIELDS,
+			[$this, 'onDefineGqlTypeFields']
+		);
+
 		$this->get('livePreview');
 		$this->get('revalidator');
 	}
@@ -82,6 +92,26 @@ class UtilityBelt extends Plugin
 			$res
 		);
 		$event->result = Json::decode($res);
+	}
+
+	public function onDefineGqlTypeFields (DefineGqlTypeFieldsEvent $event)
+	{
+		if ($event->typeName === 'AssetInterface')
+		{
+			$event->fields['svg'] = [
+				'name' => 'svg',
+				'type' => Type::string(),
+				'resolve' => function ($source) {
+					/** @var Asset $asset */
+					$asset = $source;
+
+					if ($asset->getExtension() === 'svg')
+						return preg_replace('/(<\?xml.*\?>|\n|\s\s+)/m', '', $asset->getContents());
+
+					return null;
+				},
+			];
+		}
 	}
 
 }

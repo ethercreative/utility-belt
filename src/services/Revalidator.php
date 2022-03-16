@@ -8,7 +8,9 @@ use craft\base\Element;
 use craft\db\Query;
 use craft\db\Table;
 use craft\elements\Entry;
+use craft\errors\BusyResourceException;
 use craft\errors\SiteNotFoundException;
+use craft\errors\StaleResourceException;
 use craft\events\ModelEvent;
 use craft\events\SectionEvent;
 use craft\events\TemplateEvent;
@@ -18,14 +20,16 @@ use craft\services\Sections;
 use craft\web\twig\TemplateLoaderException;
 use craft\web\View;
 use ether\utilitybelt\jobs\RevalidateJob;
+use yii\base\ErrorException;
 use yii\base\Event;
+use yii\base\InvalidConfigException;
+use yii\base\NotSupportedException;
 use yii\db\Exception;
 
 class Revalidator extends Component
 {
 
 	public static $tableName = '{{%b_revalidate_jobs}}';
-	public static $urisTableName = '{{%b_additional_revalidate_uris}}';
 
 	public function init ()
 	{
@@ -69,7 +73,7 @@ class Revalidator extends Component
 	public function onAfterSectionSave (SectionEvent $event)
 	{
 		if (!empty($event->section))
-			$this->saveAdditionalURIs($event->section->id);
+			$this->saveAdditionalURIs($event->section->uid);
 	}
 
 	/**
@@ -94,6 +98,7 @@ class Revalidator extends Component
 				'siteId' => Craft::$app->getSites()->getCurrentSite()->id,
 			]);
 		} else {
+			$sectionUid = Craft::$app->getSections()->getSectionById($sectionId)->uid;
 			$markup = Cp::editableTableFieldHtml([
 				'label' => 'Additional Revalidate URIs',
 				'instructions' => 'Any additional URIs that need to be revalidated when this entry changes (i.e. indexes)',
@@ -105,7 +110,7 @@ class Revalidator extends Component
 						'heading' => 'URI'
 					],
 				],
-				'rows' => $this->getAdditionalURIs($sectionId, true),
+				'rows' => $this->getAdditionalURIs($sectionUid, true),
 			]);
 		}
 
@@ -119,18 +124,14 @@ class Revalidator extends Component
 	/**
 	 * Get the additional URIs for the given section
 	 *
-	 * @param int  $sectionId
+	 * @param string $sectionUid
 	 * @param bool $asRows
 	 *
 	 * @return array
 	 */
-	public function getAdditionalURIs (int $sectionId, bool $asRows = false): array
+	public function getAdditionalURIs (string $sectionUid, bool $asRows = false): array
 	{
-		$uris = (new Query())
-			->select('uri')
-			->from(self::$urisTableName)
-			->where(compact('sectionId'))
-			->column();
+		$uris = Craft::$app->getProjectConfig()->get("utility-belt.revalidator.uris.$sectionUid") ?? [];
 
 		if (!$asRows)
 			return $uris;
@@ -146,12 +147,17 @@ class Revalidator extends Component
 	/**
 	 * Save additional URIs
 	 *
-	 * @param int $sectionId
+	 * @param string $sectionUid
 	 *
 	 * @return void
-	 * @throws Exception
+	 * @throws BusyResourceException
+	 * @throws StaleResourceException
+	 * @throws ErrorException
+	 * @throws \yii\base\Exception
+	 * @throws InvalidConfigException
+	 * @throws NotSupportedException
 	 */
-	public function saveAdditionalURIs (int $sectionId)
+	public function saveAdditionalURIs (string $sectionUid)
 	{
 		$request = Craft::$app->getRequest();
 
@@ -159,27 +165,19 @@ class Revalidator extends Component
 			return;
 
 		$uris = $request->getBodyParam('bAdditionalRevalidateUris');
+		$key = "utility-belt.revalidator.uris.$sectionUid";
+		$config = Craft::$app->getProjectConfig();
 
 		if (empty($uris))
+		{
+			$config->remove($key);
 			return;
+		}
 
 		foreach ($uris as $i => $uri)
-			$uris[$i][1] = $sectionId;
+			$uris[$i] = $uri[0];
 
-		$db = Craft::$app->getDb();
-
-		$db->createCommand()
-		   ->delete(self::$urisTableName, compact('sectionId'))
-		   ->execute();
-
-		$db->createCommand()
-		   ->batchInsert(
-			   self::$urisTableName,
-			   ['uri', 'sectionId'],
-			   $uris,
-			   false
-		   )
-		   ->execute();
+		$config->set($key, $uris);
 	}
 
 	/**
@@ -200,8 +198,12 @@ class Revalidator extends Component
 		if (!empty($uri)) $job->uris[] = $uri;
 
 		if ($element instanceof Entry)
-			foreach ($this->getAdditionalURIs($element->sectionId) as $uri)
+		{
+			$sectionUid = Craft::$app->getSections()->getSectionById($element->sectionId)->uid;
+
+			foreach ($this->getAdditionalURIs($sectionUid) as $uri)
 				$job->uris[] = $uri;
+		}
 
 		if (empty($id))
 		{

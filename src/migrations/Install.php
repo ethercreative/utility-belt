@@ -33,29 +33,6 @@ class Install extends Migration
 			if (!str_contains($exception->getMessage(), 'SQLSTATE[42S01]'))
 				throw $exception;
 		}
-
-		try {
-			$this->createTable(
-				Revalidator::$urisTableName,
-				[
-					'id'        => $this->primaryKey(),
-					'uri'       => $this->string(),
-					'sectionId' => $this->integer(11),
-				]
-			);
-
-			$this->addForeignKey(
-				null,
-				Revalidator::$urisTableName,
-				['sectionId'],
-				Table::SECTIONS,
-				['id'],
-				'CASCADE'
-			);
-		} catch (Exception $exception) {
-			if (!str_contains($exception->getMessage(), 'SQLSTATE[42S01]'))
-				throw $exception;
-		}
 	}
 
 	public function safeDown (): bool
@@ -64,7 +41,6 @@ class Install extends Migration
 		// ---------------------------------------------------------------------
 
 		$this->dropTableIfExists(Revalidator::$tableName);
-		$this->dropTableIfExists(Revalidator::$urisTableName);
 
 		return true;
 	}

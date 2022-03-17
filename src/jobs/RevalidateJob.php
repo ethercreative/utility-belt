@@ -24,13 +24,13 @@ class RevalidateJob extends BaseJob
 		$this->uris = array_unique($this->uris);
 
 		$client = Craft::createGuzzleClient();
-		$url = getenv('FRONTEND_URL') . '/api/revalidate?token=' . getenv('REVALIDATE_TOKEN') . '&path=';
+		$url = getenv('FRONTEND_URL') . '/api/revalidate?token=' . getenv('REVALIDATE_TOKEN') . '&path=/';
 		$total = count($this->uris);
 		$i = 0;
 
 		foreach ($this->uris as $uri)
 		{
-			$client->get($url . $uri);
+			$client->get($url . ltrim($uri, '/'));
 			$queue->setProgress(++$i / $total * 100, $uri);
 		}
 

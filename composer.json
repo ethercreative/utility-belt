@@ -1,7 +1,7 @@
 {
   "name": "ether/utility-belt",
   "description": "A collection of things we use on every Craft CMS site",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "craft-plugin",
   "license": "GPL-3.0-or-later",
   "minimum-stability": "dev",

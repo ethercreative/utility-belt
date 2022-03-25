@@ -8,13 +8,16 @@ use craft\elements\Asset;
 use craft\events\DefineGqlTypeFieldsEvent;
 use craft\events\ExecuteGqlQueryEvent;
 use craft\events\PluginEvent;
+use craft\events\RegisterComponentTypesEvent;
 use craft\gql\TypeManager;
 use craft\helpers\App;
 use craft\helpers\Json;
+use craft\services\Dashboard;
 use craft\services\Gql;
 use craft\services\Plugins;
 use ether\utilitybelt\services\LivePreview;
 use ether\utilitybelt\services\Revalidator;
+use ether\utilitybelt\widgets\TwigWidget;
 use GraphQL\Type\Definition\Type;
 use yii\base\Event;
 
@@ -59,6 +62,12 @@ class UtilityBelt extends Plugin
 			TypeManager::class,
 			TypeManager::EVENT_DEFINE_GQL_TYPE_FIELDS,
 			[$this, 'onDefineGqlTypeFields']
+		);
+
+		Event::on(
+			Dashboard::class,
+			Dashboard::EVENT_REGISTER_WIDGET_TYPES,
+			[$this, 'onRegisterWidgetTypes']
 		);
 
 		$this->get('livePreview');
@@ -112,6 +121,11 @@ class UtilityBelt extends Plugin
 				},
 			];
 		}
+	}
+
+	public function onRegisterWidgetTypes (RegisterComponentTypesEvent $event)
+	{
+		$event->types[] = TwigWidget::class;
 	}
 
 }

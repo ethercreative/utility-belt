@@ -1,0 +1,20 @@
+{% import "_includes/forms" as forms %}
+
+{{ forms.textField({
+	label: "Title"|t('app'),
+	id: 'title',
+	name: 'title',
+	value: widget.title,
+	errors: widget.getErrors('title'),
+	required: true,
+}) }}
+
+{{ forms.autosuggestField({
+	label: "Template"|t('app'),
+	id: 'template',
+	name: 'template',
+	value: widget.template,
+	errors: widget.getErrors('template'),
+	required: true,
+	suggestions: craft.cp.getTemplateSuggestions(),
+}) }}

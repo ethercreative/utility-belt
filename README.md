@@ -30,6 +30,10 @@ Converts any absolute internal urls (based off `href^=@web`) to relative URIs.
 
 Assets with the `.svg` extension will return the contents of the SVG in the `svg` field on the asset in GraphQL.
 
+### Twig Dashboard Widget
+
+A new dashboard widget that renders the given twig template.
+
 ## Environment Variables
 
 ```dotenv

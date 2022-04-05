@@ -34,6 +34,9 @@ Assets with the `.svg` extension will return the contents of the SVG in the `svg
 
 A new dashboard widget that renders the given twig template.
 
+### Link Field
+A simple but powerful link field for creating links to internal elements, external URLs, custom URI's or emails.
+
 ## Environment Variables
 
 ```dotenv

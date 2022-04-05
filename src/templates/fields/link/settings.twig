@@ -1,0 +1,9 @@
+{% import '_includes/forms' as form %}
+
+{{ form.checkboxSelectField({
+	label: 'Allowed Elements',
+	name: 'allowedElementTypes',
+	options: elementTypes,
+	showAllOption: true,
+	values: field.allElementTypes ? '*' : value,
+}) }}

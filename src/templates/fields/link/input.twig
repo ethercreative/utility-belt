@@ -1,0 +1,55 @@
+{% import '_includes/forms' as form %}
+{% set selectedType = value.type ?? typeOptions[0]['value'] %}
+
+<div class="linkField">
+	<div class="url">
+		{{ form.select({
+			name: field.handle ~ '[type]',
+			options: typeOptions,
+			value: selectedType,
+		}) }}
+
+		{% for type in typeOptions %}
+			{% if type.value in ['custom', 'url', 'email'] %}
+				{% set placeholder = 'Custom URI' %}
+				{% set inputType = 'text' %}
+
+				{% switch type.value %}
+					{% case 'url' %}
+						{% set placeholder = 'Custom URL' %}
+						{% set inputType = 'url' %}
+					{% case 'email' %}
+						{% set placeholder = 'Email Address' %}
+						{% set inputType = 'email' %}
+				{% endswitch %}
+
+				{% set attrs = { class: 'wide', 'data-type': type.value } %}
+				{% if type.value != selectedType %}{% set attrs = { hidden: '' }|merge(attrs) %}{% endif %}
+				{{ form.text({
+					name: field.handle ~ '[customUrl]',
+					placeholder: placeholder,
+					value: value.customUrl,
+					type: inputType,
+				})|attr(attrs) }}
+			{% else %}
+				<div class="wide" data-type="{{ type.value }}"{{ type.value != selectedType ? ' hidden' }}>
+					{{ form.elementSelect({
+						name: field.handle ~ '[elementId]',
+						elementType: type.value,
+						single: true,
+						elements: type.value == selectedType ? [value.element],
+						disabled: type.value != selectedType,
+					}) }}
+				</div>
+			{% endif %}
+		{% endfor %}
+	</div>
+
+	{{ form.text({
+		name: field.handle ~ '[customText]',
+		placeholder: 'Custom Text',
+		value: value.customText,
+	})|attr({ class: 'wide' }) }}
+</div>
+
+{% js 'window.utilityBelt_initLinkField()' %}

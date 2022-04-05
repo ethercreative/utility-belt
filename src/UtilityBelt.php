@@ -13,8 +13,10 @@ use craft\gql\TypeManager;
 use craft\helpers\App;
 use craft\helpers\Json;
 use craft\services\Dashboard;
+use craft\services\Fields;
 use craft\services\Gql;
 use craft\services\Plugins;
+use ether\utilitybelt\fields\LinkField;
 use ether\utilitybelt\services\LivePreview;
 use ether\utilitybelt\services\Revalidator;
 use ether\utilitybelt\widgets\TwigWidget;
@@ -68,6 +70,12 @@ class UtilityBelt extends Plugin
 			Dashboard::class,
 			Dashboard::EVENT_REGISTER_WIDGET_TYPES,
 			[$this, 'onRegisterWidgetTypes']
+		);
+
+		Event::on(
+			Fields::class,
+			Fields::EVENT_REGISTER_FIELD_TYPES,
+			[$this, 'onRegisterFieldTypes']
 		);
 
 		$this->get('livePreview');
@@ -126,6 +134,11 @@ class UtilityBelt extends Plugin
 	public function onRegisterWidgetTypes (RegisterComponentTypesEvent $event)
 	{
 		$event->types[] = TwigWidget::class;
+	}
+
+	public function onRegisterFieldTypes (RegisterComponentTypesEvent $event)
+	{
+		$event->types[] = LinkField::class;
 	}
 
 }

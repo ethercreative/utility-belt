@@ -1,0 +1,33 @@
+.linkField {
+	padding: 12px;
+	background: #f3f7fc;
+	border: 1px solid rgba(96,125,159,.25);
+	border-radius: 5px;
+	overflow: hidden;
+}
+
+.matrixblock .linkField {
+	background: #fff;
+}
+
+.linkField .field {
+	margin: 0 !important;
+}
+
+.linkField .url {
+	display: flex;
+	align-items: flex-start;
+	margin-bottom: 12px;
+}
+
+.linkField .url > *:first-child {
+	margin-right: 12px !important;
+}
+
+.linkField .wide {
+	width: 100%;
+}
+
+.linkField .input {
+	width: 100%;
+}

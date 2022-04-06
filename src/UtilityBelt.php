@@ -3,25 +3,31 @@
 namespace ether\utilitybelt;
 
 use Craft;
+use craft\base\Element;
 use craft\base\Plugin;
 use craft\elements\Asset;
 use craft\events\DefineGqlTypeFieldsEvent;
 use craft\events\ExecuteGqlQueryEvent;
+use craft\events\ModelEvent;
 use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\gql\TypeManager;
 use craft\helpers\App;
+use craft\helpers\ElementHelper;
 use craft\helpers\Json;
+use craft\queue\jobs\ResaveElements;
 use craft\services\Dashboard;
 use craft\services\Fields;
 use craft\services\Gql;
 use craft\services\Plugins;
 use ether\utilitybelt\fields\LinkField;
+use ether\utilitybelt\jobs\RegenerateLinkCacheJob;
 use ether\utilitybelt\services\LivePreview;
 use ether\utilitybelt\services\Revalidator;
 use ether\utilitybelt\widgets\TwigWidget;
 use GraphQL\Type\Definition\Type;
 use yii\base\Event;
+use yii\db\Query;
 
 /**
  * @property LivePreview $livePreview
@@ -76,6 +82,12 @@ class UtilityBelt extends Plugin
 			Fields::class,
 			Fields::EVENT_REGISTER_FIELD_TYPES,
 			[$this, 'onRegisterFieldTypes']
+		);
+
+		Event::on(
+			Element::class,
+			Element::EVENT_AFTER_SAVE,
+			[$this, 'onAfterElementSave']
 		);
 
 		$this->get('livePreview');
@@ -139,6 +151,19 @@ class UtilityBelt extends Plugin
 	public function onRegisterFieldTypes (RegisterComponentTypesEvent $event)
 	{
 		$event->types[] = LinkField::class;
+	}
+
+	public function onAfterElementSave (ModelEvent $event)
+	{
+		/** @var Element $element */
+		$element = $event->sender;
+
+		if (ElementHelper::isDraftOrRevision($element)) return;
+
+		Craft::$app->getQueue()->push(new RegenerateLinkCacheJob([
+			'elementType' => $element::class,
+			'targetId' => $element->id,
+		]));
 	}
 
 }

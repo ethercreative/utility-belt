@@ -33,14 +33,18 @@ class Install extends Migration
 			if (!str_contains($exception->getMessage(), 'SQLSTATE[42S01]'))
 				throw $exception;
 		}
+
+		// Link
+		// ---------------------------------------------------------------------
+
+		(new m220406_093529_create_link_element_table())->safeUp();
+
 	}
 
 	public function safeDown (): bool
 	{
-		// Revalidator
-		// ---------------------------------------------------------------------
-
 		$this->dropTableIfExists(Revalidator::$tableName);
+		(new m220406_093529_create_link_element_table())->safeDown();
 
 		return true;
 	}

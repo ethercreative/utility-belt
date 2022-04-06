@@ -49,6 +49,7 @@ class LinkField extends Field
 	const EVENT_REGISTER_LINK_ELEMENT_TYPES = 'registerLinkElementTypes';
 
 	const NON_ELEMENT_TYPES = ['custom', 'url', 'email'];
+	const TABLE = '{{%utilitybelt_link_element}}';
 
 	public bool $allElementTypes = false;
 
@@ -195,6 +196,34 @@ class LinkField extends Field
 		return parent::beforeElementSave($element, $isNew);
 	}
 
+	public function afterElementSave (ElementInterface $element, bool $isNew)
+	{
+		parent::afterElementSave($element, $isNew);
+
+		/** @var LinkModel $value */
+		$value = $element->{$this->handle};
+		$db = Craft::$app->getDb();
+
+		if (empty($value->elementId))
+		{
+			$db->createCommand()
+			   ->delete(self::TABLE, ['fieldId' => $this->id])
+			   ->execute();
+
+			return;
+		}
+
+		if ($value->elementId === $element->id) return;
+
+		$db->createCommand()
+		   ->upsert(self::TABLE, [
+			   'fieldId'  => $this->id,
+			   'sourceId' => $element->id,
+			   'targetId' => $value->elementId,
+		   ], true, [], false)
+		   ->execute();
+	}
+
 	public function beforeDelete (): bool
 	{
 		if (!parent::beforeDelete())
@@ -217,6 +246,19 @@ class LinkField extends Field
 
 	// Helpers
 	// =========================================================================
+
+	public function precacheForElement (ElementInterface $source, ElementInterface $target)
+	{
+		$elements = Craft::$app->getElements();
+
+		/** @var LinkModel $value */
+		$value = $source->{$this->handle};
+		$value->elementText = $target->title;
+		$value->elementUrl = $target->uri;
+
+		$source->setFieldValue($this->handle, $value);
+		$elements->saveElement($source);
+	}
 
 	private function _getAllowedElementTypesOptions (): array
 	{
@@ -268,16 +310,21 @@ class LinkField extends Field
 		return $elementTypeOptions;
 	}
 
-	private function _getElementIdColumnName (string $handle, string $prefix = null): string
+	private function _getColumnName (string $handle, string $fieldHandle, string $prefix = null): string
 	{
 		return join('_', array_filter([
 			'field',
 			$this->columnPrefix,
 			$prefix,
+			$fieldHandle,
 			$handle,
-			'elementId',
 			$this->columnSuffix,
 		]));
+	}
+
+	private function _getElementIdColumnName (string $handle, string $prefix = null): string
+	{
+		return $this->_getColumnName('elementId', $handle, $prefix);
 	}
 
 	private function _getContentTable (): ?array

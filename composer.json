@@ -24,6 +24,6 @@
     "developer": "Ether Creative",
     "developerUrl": "https://ethercreative.co.uk",
     "class": "ether\\utilitybelt\\UtilityBelt",
-    "schemaVersion": "0.0.1"
+    "schemaVersion": "0.0.2"
   }
 }

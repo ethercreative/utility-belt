@@ -236,7 +236,7 @@ class LinkField extends Field
 		parent::afterSave($isNew);
 
 		if (!$isNew || !empty($this->oldHandle))
-			$this->_dropImageDbMeta();
+			try { $this->_dropImageDbMeta(); } catch (\Exception) {}
 
 		$this->_addImageDbMeta();
 	}

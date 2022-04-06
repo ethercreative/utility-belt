@@ -71,9 +71,6 @@ class LinkField extends Field
 		parent::__construct($config);
 	}
 
-	// TODO: Add event listener for whenever an element is saved or section
-	//  updated, and update our cached element fields as appropriate
-
 	public static function displayName (): string
 	{
 		return 'Link';
@@ -355,6 +352,29 @@ class LinkField extends Field
 			if (empty($matrixSettings)) return null;
 
 			return [Json::decode($matrixSettings)['contentTable'], $handle];
+		}
+
+		if (str_starts_with($this->context, 'superTableBlockType'))
+		{
+			[,$uid] = explode(':', $this->context);
+
+			$fieldId = (new Query())
+				->select('[[fieldId]] as fieldId')
+				->from(Table::MATRIXBLOCKTYPES)
+				->where(compact('uid'))
+				->scalar();
+
+			if (empty($fieldId)) return null;
+
+			$superTableSettings = (new Query())
+				->select('settings')
+				->from(Table::FIELDS)
+				->where(['id' => $fieldId])
+				->scalar();
+
+			if (empty($superTableSettings)) return null;
+
+			return [Json::decode($superTableSettings)['contentTable'], null];
 		}
 
 		return null;

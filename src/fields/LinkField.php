@@ -11,17 +11,47 @@ use craft\elements\Category;
 use craft\elements\Entry;
 use craft\elements\Tag;
 use craft\elements\User;
+use craft\events\RegisterComponentTypesEvent;
 use craft\helpers\ArrayHelper;
+use craft\helpers\Json;
+use ether\utilitybelt\gql\types\Link;
+use ether\utilitybelt\gql\types\LinkInput;
 use ether\utilitybelt\models\LinkModel;
 use ether\utilitybelt\web\assets\link\LinkFieldAsset;
-use Exception;
+use GraphQL\Type\Definition\Type;
+use yii\db\Query;
 use yii\db\Schema;
 use yii\web\View;
 
 class LinkField extends Field
 {
 
+	/**
+	 * @event RegisterComponentTypesEvent The event that is triggered when registering element types for linking.
+	 *
+	 * Element types must implement [[ElementInterface]].
+	 *
+	 * ---
+	 * ```php
+	 * use craft\events\RegisterComponentTypesEvent;
+	 * use ether\utilitybelt\fields\LinkField;
+	 * use yii\base\Event;
+	 *
+	 * Event::on(
+	 *     LinkField::class,
+	 *     LinkField::EVENT_REGISTER_LINK_ELEMENT_TYPES,
+	 *     function(RegisterComponentTypesEvent $event) {
+	 *         $event->types[] = MyElementType::class;
+	 *     }
+	 * );
+	 * ```
+	 */
+	const EVENT_REGISTER_LINK_ELEMENT_TYPES = 'registerLinkElementTypes';
+
+	const NON_ELEMENT_TYPES = ['custom', 'url', 'email'];
+
 	public bool $allElementTypes = false;
+
 	/** @var string[]  */
 	public array $allowedElementTypes = ['custom', Entry::class];
 
@@ -40,14 +70,15 @@ class LinkField extends Field
 		parent::__construct($config);
 	}
 
-	// TODO: GraphQL support!
+	// TODO: Add event listener for whenever an element is saved or section
+	//  updated, and update our cached element fields as appropriate
 
 	public static function displayName (): string
 	{
 		return 'Link';
 	}
 
-	public function getContentColumnType ()
+	public function getContentColumnType (): array
 	{
 		return [
 			'type' => Schema::TYPE_STRING,
@@ -74,6 +105,12 @@ class LinkField extends Field
 		return new LinkModel($value);
 	}
 
+	public function isValueEmpty ($value, ElementInterface $element): bool
+	{
+		/** @var LinkModel $value */
+		return $value->isEmpty();
+	}
+
 	protected function inputHtml ($value, ElementInterface $element = null): string
 	{
 		$view = Craft::$app->getView();
@@ -84,33 +121,61 @@ class LinkField extends Field
 		return $view->renderTemplate(
 			'utility-belt/fields/link/input',
 			[
-				'field' => $this,
-				'value' => $value,
+				'field'       => $this,
+				'value'       => $value,
 				'typeOptions' => $typeOptions,
 			]
 		);
 	}
 
-	public function getSettingsHtml ()
+	public function getSettingsHtml (): ?string
 	{
 		$value = $this->_getAllowedElementTypesOptions();
 
 		return Craft::$app->getView()->renderTemplate(
 			'utility-belt/fields/link/settings',
 			[
-				'field' => $this,
+				'field'        => $this,
 				'elementTypes' => $this->_getAllElementTypes(),
-				'value' => ArrayHelper::getColumn($value, 'value'),
+				'value'        => ArrayHelper::getColumn($value, 'value'),
 			]
 		);
 	}
+
+	// GraphQL
+	// =========================================================================
+
+	public function getContentGqlType (): Type
+	{
+		return Link::getType();
+	}
+
+	public function getContentGqlQueryArgumentType (): array
+	{
+		return [
+			'name' => $this->handle,
+			'type' => LinkInput::getType(),
+		];
+	}
+
+	public function getContentGqlMutationArgumentType (): array
+	{
+		return [
+			'name'        => $this->handle,
+			'type'        => LinkInput::getType(),
+			'description' => $this->instructions,
+		];
+	}
+
+	// Events
+	// =========================================================================
 
 	public function beforeElementSave (ElementInterface $element, bool $isNew): bool
 	{
 		/** @var LinkModel $value */
 		$value = $element->{$this->handle};
 
-		if (empty($value->elementId) || in_array($value->type, ['custom', 'url']))
+		if (empty($value->elementId) || in_array($value->type, self::NON_ELEMENT_TYPES))
 		{
 			$value->elementId = null;
 			$value->elementUrl = null;
@@ -171,7 +236,12 @@ class LinkField extends Field
 			User::class,
 		];
 
-		// TODO: add event to support custom element types
+		$event = new RegisterComponentTypesEvent([
+			'types' => $elementTypes,
+		]);
+		$this->trigger(self::EVENT_REGISTER_LINK_ELEMENT_TYPES, $event);
+
+		$elementTypes = $event->types;
 
 		$elementTypeOptions = [
 			[
@@ -198,64 +268,99 @@ class LinkField extends Field
 		return $elementTypeOptions;
 	}
 
-	private function _getElementIdColumnName (string $handle): string
+	private function _getElementIdColumnName (string $handle, string $prefix = null): string
 	{
 		return join('_', array_filter([
 			'field',
 			$this->columnPrefix,
+			$prefix,
 			$handle,
 			'elementId',
 			$this->columnSuffix,
 		]));
 	}
 
+	private function _getContentTable (): ?array
+	{
+		if ($this->context === 'global')
+			return [Table::CONTENT, null];
+
+		if (str_starts_with($this->context, 'matrixBlockType'))
+		{
+			[,$uid] = explode(':', $this->context);
+
+			$row = (new Query())
+				->select('[[fieldId]] as fieldId, [[handle]] as handle')
+				->from(Table::MATRIXBLOCKTYPES)
+				->where(compact('uid'))
+				->one();
+
+			if (empty($row)) return null;
+
+			['fieldId' => $fieldId, 'handle' => $handle] = $row;
+
+			$matrixSettings = (new Query())
+				->select('settings')
+				->from(Table::FIELDS)
+				->where(['id' => $fieldId])
+				->scalar();
+
+			if (empty($matrixSettings)) return null;
+
+			return [Json::decode($matrixSettings)['contentTable'], $handle];
+		}
+
+		return null;
+	}
+
 	private function _dropImageDbMeta ()
 	{
-		// FIXME: This will throw if the field is saved in a matrix
-		// TODO: we should be targeting the MATRIX fields content table, not the generic one (matrixcontent_)
+		$tbl = $this->_getContentTable();
+		if (empty($tbl)) return;
 
-		try {
-			$db = Craft::$app->db;
-			$elementIdColumn = $this->_getElementIdColumnName($this->oldHandle ?? $this->handle);
+		[$contentTable, $prefix] = $tbl;
 
-			$idx = 'utilitybelt_' . $elementIdColumn . '_idx';
-			$fkey = 'utilitybelt_' . $elementIdColumn . '_fkey';
+		$db = Craft::$app->db;
+		$elementIdColumn = $this->_getElementIdColumnName($this->oldHandle ?? $this->handle, $prefix);
 
-			$db->createCommand()
-			   ->dropForeignKey($fkey, Table::CONTENT)
-			   ->execute();
+		$idx = 'utilitybelt_' . $elementIdColumn . '_idx';
+		$fkey = 'utilitybelt_' . $elementIdColumn . '_fkey';
 
-			$db->createCommand()
-			   ->dropIndex($idx, Table::CONTENT)
-			   ->execute();
-		} catch (Exception) {}
+		$db->createCommand()
+		   ->dropForeignKey($fkey, $contentTable)
+		   ->execute();
+
+		$db->createCommand()
+		   ->dropIndex($idx, $contentTable)
+		   ->execute();
 	}
 
 	private function _addImageDbMeta ()
 	{
-		// FIXME: This will throw if the field is saved in a matrix
+		$tbl = $this->_getContentTable();
+		if (empty($tbl)) return;
 
-		try {
-			$db = Craft::$app->db;
-			$elementIdColumn = $this->_getElementIdColumnName($this->handle);
+		[$contentTable, $prefix] = $tbl;
 
-			$idx = 'utilitybelt_' . $elementIdColumn . '_idx';
-			$fkey = 'utilitybelt_' . $elementIdColumn . '_fkey';
+		$db = Craft::$app->db;
+		$elementIdColumn = $this->_getElementIdColumnName($this->handle, $prefix);
 
-			$db->createCommand()
-			   ->createIndex($idx, Table::CONTENT, [$elementIdColumn])
-			   ->execute();
+		$idx = 'utilitybelt_' . $elementIdColumn . '_idx';
+		$fkey = 'utilitybelt_' . $elementIdColumn . '_fkey';
 
-			$db->createCommand()
-			   ->addForeignKey(
-				   $fkey,
-				   Table::CONTENT, [$elementIdColumn],
-				   Table::ELEMENTS, ['id'],
-				   'SET NULL',
-				   'NO ACTION'
-			   )
-			   ->execute();
-		} catch (Exception) {}
+		$db->createCommand()
+		   ->createIndex($idx, $contentTable, [$elementIdColumn])
+		   ->execute();
+
+		$db->createCommand()
+		   ->addForeignKey(
+			   $fkey,
+			   $contentTable, [$elementIdColumn],
+			   Table::ELEMENTS, ['id'],
+			   'SET NULL',
+			   'NO ACTION'
+		   )
+		   ->execute();
 	}
 
 }

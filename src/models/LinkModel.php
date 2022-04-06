@@ -4,11 +4,12 @@ namespace ether\utilitybelt\models;
 
 use craft\base\ElementInterface;
 use craft\base\Model;
+use ether\utilitybelt\fields\LinkField;
 
 class LinkModel extends Model
 {
 
-	public ?string $type = null;
+	public string|ElementInterface|null $type = null;
 
 	public ?string $customText = null;
 	public ?string $customUrl  = null;
@@ -27,10 +28,28 @@ class LinkModel extends Model
 
 	public function getElement (): ?ElementInterface
 	{
-		if (empty($this->elementId) || in_array($this->type, ['custom', 'url']))
+		if (empty($this->elementId) || in_array($this->type, LinkField::NON_ELEMENT_TYPES))
 			return null;
 
 		return $this->type::findOne($this->elementId);
+	}
+
+	public function isEmpty (): bool
+	{
+		return empty($this->elementId) && empty($this->customUrl);
+	}
+
+	public function getUrl (): ?string
+	{
+		return empty($this->elementId) ? $this->customUrl : $this->elementUrl;
+	}
+
+	public function getText (): ?string
+	{
+		if (!empty($this->elementId) && empty($this->customText))
+			return $this->elementText;
+
+		return $this->customText;
 	}
 
 }

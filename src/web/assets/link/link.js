@@ -10,12 +10,25 @@ window.utilityBelt_initLinkField = () => {
 
 		const updateTypes = () => {
 			typeFields.forEach(type => {
-				if (type.dataset.type === select.value) {
-					type.querySelector('input[type=hidden]')?.removeAttribute('disabled');
-					type.removeAttribute('hidden');
+				if (type.nodeName.toLowerCase() === 'input') {
+					if (type.dataset.type === select.value) {
+						type.removeAttribute('disabled');
+						type.removeAttribute('hidden');
+						type.classList.remove('hidden', 'disabled');
+					} else {
+						type.setAttribute('disabled', '');
+						type.setAttribute('hidden', '');
+						type.classList.add('hidden');
+						type.classList.add('disabled');
+					}
 				} else {
-					type.querySelector('input[type=hidden]')?.setAttribute('disabled', '');
-					type.setAttribute('hidden', '');
+					if (type.dataset.type === select.value) {
+						type.querySelector('input[type=hidden]')?.removeAttribute('disabled');
+						type.removeAttribute('hidden');
+					} else {
+						type.querySelector('input[type=hidden]')?.setAttribute('disabled', '');
+						type.setAttribute('hidden', '');
+					}
 				}
 			});
 		};

@@ -30,6 +30,7 @@
 					placeholder: placeholder,
 					value: value.customUrl,
 					type: inputType,
+					disabled: type.value != selectedType,
 				})|attr(attrs) }}
 			{% else %}
 				<div class="wide" data-type="{{ type.value }}"{{ type.value != selectedType ? ' hidden' }}>
@@ -38,7 +39,6 @@
 						elementType: type.value,
 						single: true,
 						elements: type.value == selectedType ? [value.element],
-						disabled: type.value != selectedType,
 					}) }}
 				</div>
 			{% endif %}

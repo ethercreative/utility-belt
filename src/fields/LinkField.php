@@ -18,6 +18,7 @@ use ether\utilitybelt\gql\types\Link;
 use ether\utilitybelt\gql\types\LinkInput;
 use ether\utilitybelt\models\LinkModel;
 use ether\utilitybelt\web\assets\link\LinkFieldAsset;
+use Exception;
 use GraphQL\Type\Definition\Type;
 use yii\db\Query;
 use yii\db\Schema;
@@ -95,18 +96,18 @@ class LinkField extends Field
 		return LinkModel::class;
 	}
 
-	public function normalizeValue (mixed $value, ElementInterface $element = null)
+	public function normalizeValue (mixed $value, ElementInterface $element = null): ?LinkModel
 	{
-		if ($value instanceof LinkModel)
-			return $value;
+		if (!($value instanceof LinkModel))
+			$value = new LinkModel($value);
 
-		return new LinkModel($value);
+		return $value->isEmpty() ? null : $value;
 	}
 
 	public function isValueEmpty ($value, ElementInterface $element): bool
 	{
-		/** @var LinkModel $value */
-		return $value->isEmpty();
+		/** @var LinkModel|null $value */
+		return (bool) $value?->isEmpty();
 	}
 
 	protected function inputHtml ($value, ElementInterface $element = null): string
@@ -120,7 +121,7 @@ class LinkField extends Field
 			'utility-belt/fields/link/input',
 			[
 				'field'       => $this,
-				'value'       => $value,
+				'value'       => $value ?? new LinkModel(),
 				'typeOptions' => $typeOptions,
 			]
 		);
@@ -173,6 +174,9 @@ class LinkField extends Field
 		/** @var LinkModel $value */
 		$value = $element->{$this->handle};
 
+		if (empty($value))
+			return parent::beforeElementSave($element, $isNew);
+
 		if (empty($value->elementId) || in_array($value->type, self::NON_ELEMENT_TYPES))
 		{
 			$value->elementId = null;
@@ -201,6 +205,9 @@ class LinkField extends Field
 		$value = $element->{$this->handle};
 		$db = Craft::$app->getDb();
 
+		if (empty($value))
+			return;
+
 		if (empty($value->elementId))
 		{
 			$db->createCommand()
@@ -226,7 +233,7 @@ class LinkField extends Field
 		if (!parent::beforeDelete())
 			return false;
 
-		$this->_dropImageDbMeta();
+		$this->_dropDbMeta();
 
 		return true;
 	}
@@ -235,10 +242,13 @@ class LinkField extends Field
 	{
 		parent::afterSave($isNew);
 
+		// This will be called if we switch from a different field type to Link,
+		// and will end up throwing. An empty catch is fine as a workaround for
+		// now.
 		if (!$isNew || !empty($this->oldHandle))
-			try { $this->_dropImageDbMeta(); } catch (\Exception) {}
+			try { $this->_dropDbMeta(); } catch (Exception) {}
 
-		$this->_addImageDbMeta();
+		$this->_addDbMeta();
 	}
 
 	// Helpers
@@ -249,7 +259,7 @@ class LinkField extends Field
 		$elements = Craft::$app->getElements();
 
 		/** @var LinkModel $value */
-		$value = $source->{$this->handle};
+		$value = $source->{$this->handle} ?? new LinkModel();
 		$value->elementText = $target->title;
 		$value->elementUrl = $target->uri;
 
@@ -380,7 +390,7 @@ class LinkField extends Field
 		return null;
 	}
 
-	private function _dropImageDbMeta ()
+	private function _dropDbMeta ()
 	{
 		$tbl = $this->_getContentTable();
 		if (empty($tbl)) return;
@@ -402,7 +412,7 @@ class LinkField extends Field
 		   ->execute();
 	}
 
-	private function _addImageDbMeta ()
+	private function _addDbMeta ()
 	{
 		$tbl = $this->_getContentTable();
 		if (empty($tbl)) return;

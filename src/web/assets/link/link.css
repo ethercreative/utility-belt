@@ -31,3 +31,8 @@
 .linkField .input {
 	width: 100%;
 }
+
+.linkField .urlSuffix {
+	width: 50%;
+	margin-left: 12px !important;
+}

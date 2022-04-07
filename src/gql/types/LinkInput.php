@@ -31,6 +31,7 @@ class LinkInput extends InputObjectType
 				'elementText' => Type::string(),
 				'elementUrl'  => Type::string(),
 				'elementId'   => Type::id(),
+				'urlSuffix'   => Type::string(),
 			],
 		]);
 	}

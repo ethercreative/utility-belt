@@ -52,10 +52,13 @@ class LinkField extends Field
 	const NON_ELEMENT_TYPES = ['custom', 'url', 'email'];
 	const TABLE = '{{%utilitybelt_link_element}}';
 
-	public bool $allElementTypes = false;
+	// Config
+	// =========================================================================
 
+	public bool $allElementTypes = false;
 	/** @var string[]  */
 	public array $allowedElementTypes = ['custom', Entry::class];
+	public bool $allowUrlSuffix = true;
 
 	public function __construct ($config = [])
 	{
@@ -71,6 +74,9 @@ class LinkField extends Field
 
 		parent::__construct($config);
 	}
+
+	// Field
+	// =========================================================================
 
 	public static function displayName (): string
 	{
@@ -88,6 +94,8 @@ class LinkField extends Field
 			'elementText' => Schema::TYPE_STRING,
 			'elementUrl'  => Schema::TYPE_STRING,
 			'elementId'   => Schema::TYPE_INTEGER,
+
+			'urlSuffix' => Schema::TYPE_STRING,
 		];
 	}
 
@@ -317,7 +325,7 @@ class LinkField extends Field
 		return $elementTypeOptions;
 	}
 
-	private function _getColumnName (string $handle, string $fieldHandle, string $prefix = null): string
+	public function getColumnName (string $handle, string $fieldHandle, string $prefix = null): string
 	{
 		return join('_', array_filter([
 			'field',
@@ -331,7 +339,7 @@ class LinkField extends Field
 
 	private function _getElementIdColumnName (string $handle, string $prefix = null): string
 	{
-		return $this->_getColumnName('elementId', $handle, $prefix);
+		return $this->getColumnName('elementId', $handle, $prefix);
 	}
 
 	private function _getContentTable (): ?array

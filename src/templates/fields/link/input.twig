@@ -43,6 +43,14 @@
 				</div>
 			{% endif %}
 		{% endfor %}
+
+		{% if field.allowUrlSuffix %}
+			{{ form.text({
+				name: field.handle ~ '[urlSuffix]',
+				placeholder: 'URL Suffix',
+				value: value.urlSuffix,
+			})|attr({ class: 'urlSuffix' }) }}
+		{% endif %}
 	</div>
 
 	{{ form.text({

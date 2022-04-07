@@ -15,7 +15,6 @@ use craft\gql\TypeManager;
 use craft\helpers\App;
 use craft\helpers\ElementHelper;
 use craft\helpers\Json;
-use craft\queue\jobs\ResaveElements;
 use craft\services\Dashboard;
 use craft\services\Fields;
 use craft\services\Gql;
@@ -27,7 +26,6 @@ use ether\utilitybelt\services\Revalidator;
 use ether\utilitybelt\widgets\TwigWidget;
 use GraphQL\Type\Definition\Type;
 use yii\base\Event;
-use yii\db\Query;
 
 /**
  * @property LivePreview $livePreview

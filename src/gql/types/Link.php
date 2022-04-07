@@ -34,6 +34,8 @@ class Link extends ObjectType
 				'elementId'   => Type::id(),
 				'element'     => Element::getType(),
 
+				'urlSuffix'   => Type::string(),
+
 				'url'         => Type::string(),
 				'text'        => Type::string(),
 			],

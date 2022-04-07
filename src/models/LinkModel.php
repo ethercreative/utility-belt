@@ -18,6 +18,8 @@ class LinkModel extends Model
 	public ?string $elementUrl  = null;
 	public ?int    $elementId   = null;
 
+	public ?string $urlSuffix = null;
+
 	public function __construct ($config = [])
 	{
 		if (empty($config['elementId']))
@@ -41,7 +43,7 @@ class LinkModel extends Model
 
 	public function getUrl (): ?string
 	{
-		return empty($this->elementId) ? $this->customUrl : $this->elementUrl;
+		return (empty($this->elementId) ? $this->customUrl : $this->elementUrl) . $this->urlSuffix;
 	}
 
 	public function getText (): ?string

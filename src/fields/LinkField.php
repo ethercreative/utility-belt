@@ -236,11 +236,9 @@ class LinkField extends Field
 		   ->execute();
 	}
 
-	public function beforeDelete (): bool
+	public function beforeApplyDelete (): bool
 	{
-		if (!parent::beforeDelete())
-			return false;
-
+		parent::beforeApplyDelete();
 		$this->_dropDbMeta();
 
 		return true;
@@ -302,11 +300,11 @@ class LinkField extends Field
 
 		$elementTypeOptions = [
 			[
-				'label' => 'Custom',
+				'label' => 'Internal URL',
 				'value' => 'custom',
 			],
 			[
-				'label' => 'URL',
+				'label' => 'External URL',
 				'value' => 'url',
 			],
 			[

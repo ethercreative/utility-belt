@@ -57,7 +57,9 @@ class RegenerateLinkCacheJob extends BaseJob
 
 			/** @var LinkField $field */
 			$field = $fieldsById[$fieldId];
-			$field->precacheForElement($sourcesById[$sourceId], $target);
+			$source = $sourcesById[$sourceId];
+			if (!empty($source))
+				$field->precacheForElement($sourcesById[$sourceId], $target);
 
 			$queue->setProgress($total / ++$i);
 		}

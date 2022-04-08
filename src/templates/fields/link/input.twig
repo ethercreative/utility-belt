@@ -1,5 +1,5 @@
 {% import '_includes/forms' as form %}
-{% set selectedType = value.type ?? typeOptions[0]['value'] %}
+{% set selectedType = value.type ?? (typeOptions|first)['value'] %}
 
 <div class="linkField">
 	<div class="url">
@@ -53,11 +53,15 @@
 		{% endif %}
 	</div>
 
-	{{ form.text({
-		name: field.handle ~ '[customText]',
-		placeholder: 'Custom Text',
-		value: value.customText,
-	})|attr({ class: 'wide' }) }}
+	<div class="customText">
+		{{ form.text({
+			name: field.handle ~ '[customText]',
+			placeholder: 'Custom Text',
+			value: value.customText,
+		})|attr({ class: 'wide' }) }}
+
+		<button class="clear-btn" type="button" title="{{ 'Clear'|t }}" alia-label="{{ 'Clear'|t }}"></button>
+	</div>
 </div>
 
 {% js 'window.utilityBelt_initLinkField()' %}

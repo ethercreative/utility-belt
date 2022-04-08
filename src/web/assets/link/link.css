@@ -36,3 +36,12 @@
 	width: 50%;
 	margin-left: 12px !important;
 }
+
+.linkField .customText {
+	display: flex;
+	align-items: center;
+}
+
+.linkField .customText .clear-btn {
+	justify-content: flex-end;
+}

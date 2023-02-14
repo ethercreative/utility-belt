@@ -200,6 +200,7 @@ class Revalidator extends Component
 		if ($element instanceof Entry)
 		{
 			$sectionUid = Craft::$app->getSections()->getSectionById($element->sectionId)->uid;
+			$job->sectionUid = $sectionUid;
 
 			foreach ($this->getAdditionalURIs($sectionUid) as $uri)
 				$job->uris[] = $uri;

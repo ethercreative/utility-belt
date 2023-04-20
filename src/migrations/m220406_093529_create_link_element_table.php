@@ -15,7 +15,7 @@ class m220406_093529_create_link_element_table extends Migration
     /**
      * @inheritdoc
      */
-    public function safeUp()
+    public function safeUp(): void
     {
         $this->createTable(LinkField::TABLE, [
 			'fieldId' => $this->integer(11),

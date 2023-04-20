@@ -31,7 +31,7 @@ class Revalidator extends Component
 
 	public static $tableName = '{{%b_revalidate_jobs}}';
 
-	public function init ()
+	public function init (): void
 	{
 		parent::init();
 
@@ -54,7 +54,7 @@ class Revalidator extends Component
 		);
 	}
 
-	public function onAfterElementSave (ModelEvent $event)
+	public function onAfterElementSave (ModelEvent $event): void
 	{
 		/** @var Element $element */
 		$element = $event->sender;
@@ -65,12 +65,12 @@ class Revalidator extends Component
 		$this->push($element);
 	}
 
-	public function onAfterRenderTemplate (TemplateEvent $event)
+	public function onAfterRenderTemplate (TemplateEvent $event): void
 	{
 		$this->injectAdditionalUrisTable($event);
 	}
 
-	public function onAfterSectionSave (SectionEvent $event)
+	public function onAfterSectionSave (SectionEvent $event): void
 	{
 		if (!empty($event->section))
 			$this->saveAdditionalURIs($event->section->uid);
@@ -84,7 +84,7 @@ class Revalidator extends Component
 	 * @return void
 	 * @throws SiteNotFoundException|TemplateLoaderException
 	 */
-	public function injectAdditionalUrisTable (TemplateEvent $event)
+	public function injectAdditionalUrisTable (TemplateEvent $event): void
 	{
 		if ($event->template !== 'settings/sections/_edit')
 			return;
@@ -157,7 +157,7 @@ class Revalidator extends Component
 	 * @throws InvalidConfigException
 	 * @throws NotSupportedException
 	 */
-	public function saveAdditionalURIs (string $sectionUid)
+	public function saveAdditionalURIs (string $sectionUid): void
 	{
 		$request = Craft::$app->getRequest();
 
@@ -188,7 +188,7 @@ class Revalidator extends Component
 	 * @return void
 	 * @throws Exception|\yii\base\Exception
 	 */
-	public function push (Element $element)
+	public function push (Element $element): void
 	{
 		/** @var RevalidateJob $job */
 		[$id, $job] = $this->getJob();
@@ -248,7 +248,7 @@ class Revalidator extends Component
 	 * @return void
 	 * @throws Exception
 	 */
-	private function storeJobId (int $id)
+	private function storeJobId (int $id): void
 	{
 		Craft::$app->getDb()->createCommand()
 		           ->insert(self::$tableName, ['jobId' => $id], false)
@@ -264,7 +264,7 @@ class Revalidator extends Component
 	 * @return void
 	 * @throws Exception
 	 */
-	private function updateJob (int $id, RevalidateJob $job)
+	private function updateJob (int $id, RevalidateJob $job): void
 	{
 		$job = Craft::$app->getQueue()->serializer->serialize($job);
 

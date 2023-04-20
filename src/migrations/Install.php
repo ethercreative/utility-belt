@@ -10,7 +10,7 @@ use yii\db\Exception;
 class Install extends Migration
 {
 
-	public function safeUp ()
+	public function safeUp (): void
 	{
 		// Revalidator
 		// ---------------------------------------------------------------------

@@ -205,7 +205,7 @@ class LinkField extends Field
 		return parent::beforeElementSave($element, $isNew);
 	}
 
-	public function afterElementSave (ElementInterface $element, bool $isNew)
+	public function afterElementSave (ElementInterface $element, bool $isNew): void
 	{
 		parent::afterElementSave($element, $isNew);
 
@@ -236,12 +236,10 @@ class LinkField extends Field
 		   ->execute();
 	}
 
-	public function beforeApplyDelete (): bool
+	public function beforeApplyDelete (): void
 	{
 		parent::beforeApplyDelete();
 		$this->_dropDbMeta();
-
-		return true;
 	}
 
 	public function afterSave (bool $isNew): void
@@ -260,7 +258,7 @@ class LinkField extends Field
 	// Helpers
 	// =========================================================================
 
-	public function precacheForElement (ElementInterface $source, ElementInterface $target)
+	public function precacheForElement (ElementInterface $source, ElementInterface $target): void
 	{
 		$elements = Craft::$app->getElements();
 
@@ -396,7 +394,7 @@ class LinkField extends Field
 		return null;
 	}
 
-	private function _dropDbMeta ()
+	private function _dropDbMeta (): void
 	{
 		$tbl = $this->_getContentTable();
 		if (empty($tbl)) return;
@@ -418,7 +416,7 @@ class LinkField extends Field
 		   ->execute();
 	}
 
-	private function _addDbMeta ()
+	private function _addDbMeta (): void
 	{
 		$tbl = $this->_getContentTable();
 		if (empty($tbl)) return;

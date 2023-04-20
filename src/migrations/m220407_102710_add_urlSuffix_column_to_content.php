@@ -19,7 +19,7 @@ class m220407_102710_add_urlSuffix_column_to_content extends Migration
     /**
      * @inheritdoc
      */
-    public function safeUp()
+    public function safeUp(): void
     {
 		$fieldsService = Craft::$app->getFields();
         $fieldIds = (new Query())

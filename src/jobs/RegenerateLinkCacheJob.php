@@ -13,9 +13,9 @@ class RegenerateLinkCacheJob extends BaseJob
 	public string $elementType;
 	public int $targetId;
 
-	public $description = 'Regenerating Link Cache';
+	public ?string $description = 'Regenerating Link Cache';
 
-	public function execute ($queue)
+	public function execute ($queue): void
 	{
 		$target = $this->elementType::findOne(['id' => $this->targetId]);
 		$fieldsService = Craft::$app->getFields();

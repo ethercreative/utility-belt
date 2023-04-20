@@ -17,11 +17,12 @@ class RevalidateJob extends BaseJob
 		return 'Revalidating Front-end';
 	}
 
-	public function execute ($queue): bool
+	public function execute ($queue): void
 	{
 		// Skip if localhost
-//		if (str_contains(getenv('FRONTEND_URL'), 'local'))
-//			return true;
+		$frontendUrl = getenv('FRONTEND_URL');
+		if (empty($frontendUrl) || str_contains($frontendUrl, 'local'))
+			return;
 
 		$this->uris = array_unique($this->uris);
 
@@ -62,8 +63,6 @@ class RevalidateJob extends BaseJob
 				}
 			}
 		}
-
-		return true;
 	}
 
 }

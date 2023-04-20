@@ -12,7 +12,7 @@ use yii\web\View;
 class LivePreview extends Component
 {
 
-	public function init ()
+	public function init (): void
 	{
 		parent::init();
 
@@ -50,7 +50,7 @@ JS;
 		}
 	}
 
-	public function onSectionInit (Event $event)
+	public function onSectionInit (Event $event): void
 	{
 		/** @var Section $section */
 		$section = $event->sender;

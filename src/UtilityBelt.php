@@ -34,7 +34,7 @@ use yii\base\Event;
 class UtilityBelt extends Plugin
 {
 
-	public function init ()
+	public function init (): void
 	{
 		$this->setComponents([
 			'livePreview' => LivePreview::class,
@@ -95,21 +95,21 @@ class UtilityBelt extends Plugin
 	// Events
 	// =========================================================================
 
-	public function onAfterUninstallPlugin (PluginEvent $event)
+	public function onAfterUninstallPlugin (PluginEvent $event): void
 	{
 		if ($event->plugin->getHandle() !== $this->getHandle()) return;
 
 		Craft::$app->getPlugins()->uninstallPlugin('logs');
 	}
 
-	public function onAfterInstallPlugin (PluginEvent $event)
+	public function onAfterInstallPlugin (PluginEvent $event): void
 	{
 		if ($event->plugin->getHandle() !== $this->getHandle()) return;
 
 		Craft::$app->getPlugins()->installPlugin('logs');
 	}
 
-	public function onAfterExecuteGqlQuery (ExecuteGqlQueryEvent $event)
+	public function onAfterExecuteGqlQuery (ExecuteGqlQueryEvent $event): void
 	{
 		// Make absolute internal URLs relative
 		$res = Json::encode($event->result);
@@ -121,7 +121,7 @@ class UtilityBelt extends Plugin
 		$event->result = Json::decode($res);
 	}
 
-	public function onDefineGqlTypeFields (DefineGqlTypeFieldsEvent $event)
+	public function onDefineGqlTypeFields (DefineGqlTypeFieldsEvent $event): void
 	{
 		if ($event->typeName === 'AssetInterface')
 		{
@@ -141,17 +141,17 @@ class UtilityBelt extends Plugin
 		}
 	}
 
-	public function onRegisterWidgetTypes (RegisterComponentTypesEvent $event)
+	public function onRegisterWidgetTypes (RegisterComponentTypesEvent $event): void
 	{
 		$event->types[] = TwigWidget::class;
 	}
 
-	public function onRegisterFieldTypes (RegisterComponentTypesEvent $event)
+	public function onRegisterFieldTypes (RegisterComponentTypesEvent $event): void
 	{
 		$event->types[] = LinkField::class;
 	}
 
-	public function onAfterElementSave (ModelEvent $event)
+	public function onAfterElementSave (ModelEvent $event): void
 	{
 		/** @var Element $element */
 		$element = $event->sender;

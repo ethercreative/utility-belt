@@ -17,7 +17,7 @@ class TwigWidget extends Widget
 		return 'Twig';
 	}
 
-	public function getSettingsHtml ()
+	public function getSettingsHtml (): ?string
 	{
 		return Craft::$app->getView()->renderTemplate(
 			'utility-belt/widgets/twig-settings',
@@ -30,7 +30,7 @@ class TwigWidget extends Widget
 		return $this->title ?? parent::getTitle();
 	}
 
-	public function getBodyHtml ()
+	public function getBodyHtml (): ?string
 	{
 		if (empty($this->template))
 			return '';

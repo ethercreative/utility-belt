@@ -54,7 +54,7 @@ class Revalidator extends Component
 		);
 	}
 
-	public function onAfterElementSave (SectionEvent $event): void
+	public function onAfterElementSave (ModelEvent $event): void
 	{
 		/** @var Element $element */
 		$element = $event->sender;

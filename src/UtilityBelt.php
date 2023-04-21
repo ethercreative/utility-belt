@@ -15,10 +15,12 @@ use craft\gql\TypeManager;
 use craft\helpers\App;
 use craft\helpers\ElementHelper;
 use craft\helpers\Json;
+use craft\records\FieldGroup;
 use craft\services\Dashboard;
 use craft\services\Fields;
 use craft\services\Gql;
 use craft\services\Plugins;
+use ether\seo\fields\SeoField;
 use ether\utilitybelt\fields\LinkField;
 use ether\utilitybelt\jobs\RegenerateLinkCacheJob;
 use ether\utilitybelt\services\LivePreview;
@@ -99,7 +101,14 @@ class UtilityBelt extends Plugin
 	{
 		if ($event->plugin->getHandle() !== $this->getHandle()) return;
 
+		try {
+			$fields = Craft::$app->getFields();
+			$fields->deleteFieldById($fields->getFieldByHandle('seo')->id);
+			$fields->deleteGroupById(FieldGroup::findOne(['name' => 'SEO'])->id);
+		} /** @noinspection PhpStatementHasEmptyBodyInspection */ finally {}
+
 		Craft::$app->getPlugins()->uninstallPlugin('logs');
+		Craft::$app->getPlugins()->uninstallPlugin('seo');
 	}
 
 	public function onAfterInstallPlugin (PluginEvent $event): void
@@ -107,6 +116,20 @@ class UtilityBelt extends Plugin
 		if ($event->plugin->getHandle() !== $this->getHandle()) return;
 
 		Craft::$app->getPlugins()->installPlugin('logs');
+		Craft::$app->getPlugins()->installPlugin('seo');
+
+		$fields = Craft::$app->getFields();
+
+		$group = new \craft\models\FieldGroup(['name' => 'SEO']);
+		$fields->saveGroup($group);
+
+		$seoField = $fields->createField([
+			'type' => SeoField::class,
+			'name' => 'SEO',
+			'handle' => 'seo',
+			'groupId' => $group->id,
+		]);
+		$fields->saveField($seoField);
 	}
 
 	public function onAfterExecuteGqlQuery (ExecuteGqlQueryEvent $event): void

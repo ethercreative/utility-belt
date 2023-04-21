@@ -4,6 +4,11 @@
 A collection of things we use on every Craft CMS site
 
 ## Features
+
+### SEO
+
+Automatically installs [ether/seo](https://github.com/ether/seo) and creates a default SEO field.
+
 ### Logs
 
 Automatically installs [ether/logs](https://github.com/ether/logs).

@@ -1,3 +1,7 @@
+## 4.1.0 - 2023-04-21
+### Added
+- Add SEO install / field create
+
 ## 4.0.2 - 2023-04-21
 ### Fixed
 - Fix incorrect func arg

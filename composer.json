@@ -6,7 +6,8 @@
   "minimum-stability": "dev",
   "require": {
     "craftcms/cms": "^4",
-    "ether/logs": "*"
+    "ether/logs": "*",
+    "ether/seo": "*"
   },
   "autoload": {
     "psr-4": {

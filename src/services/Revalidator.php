@@ -49,12 +49,12 @@ class Revalidator extends Component
 
 		Event::on(
 			Sections::class,
-			Sections::EVENT_AFTER_SAVE_SECTION,
-			[$this, 'onAfterSectionSave']
+			Sections::EVENT_BEFORE_SAVE_SECTION,
+			[$this, 'onBeforeSectionSave']
 		);
 	}
 
-	public function onAfterElementSave (ModelEvent $event): void
+	public function onAfterElementSave (SectionEvent $event): void
 	{
 		/** @var Element $element */
 		$element = $event->sender;
@@ -70,7 +70,7 @@ class Revalidator extends Component
 		$this->injectAdditionalUrisTable($event);
 	}
 
-	public function onAfterSectionSave (SectionEvent $event): void
+	public function onBeforeSectionSave (SectionEvent $event): void
 	{
 		if (!empty($event->section))
 			$this->saveAdditionalURIs($event->section->uid);
@@ -86,7 +86,7 @@ class Revalidator extends Component
 	 */
 	public function injectAdditionalUrisTable (TemplateEvent $event): void
 	{
-		if ($event->template !== 'settings/sections/_edit')
+		if ($event->template !== 'settings/sections/_edit.twig')
 			return;
 
 		$sectionId = $event->variables['sectionId'];
@@ -111,6 +111,9 @@ class Revalidator extends Component
 					],
 				],
 				'rows' => $this->getAdditionalURIs($sectionUid, true),
+				'initJs' => true,
+				'allowAdd' => true,
+				'allowDelete' => true,
 			]);
 		}
 
@@ -164,6 +167,7 @@ class Revalidator extends Component
 		if ($request->getIsConsoleRequest())
 			return;
 
+		// FIXME: Can add but can't delete
 		$uris = $request->getBodyParam('bAdditionalRevalidateUris');
 		$key = "utility-belt.revalidator.uris.$sectionUid";
 		$config = Craft::$app->getProjectConfig();

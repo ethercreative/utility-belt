@@ -72,7 +72,7 @@ class Revalidator extends Component
 
 	public function onBeforeSectionSave (SectionEvent $event): void
 	{
-		if (!empty($event->section))
+		if (!empty($event->section) && !empty($event->section->uid))
 			$this->saveAdditionalURIs($event->section->uid);
 	}
 

@@ -197,9 +197,11 @@ class LinkField extends Field
 			$type = $value->type;
 			$target = $type::findOne($value->elementId);
 
-			$value->elementText = $target->title;
-			$value->elementUrl = $target->uri;
-			$value->customUrl = null;
+			if ($target) {
+				$value->elementText = $target->title;
+				$value->elementUrl = $target->uri;
+				$value->customUrl = null;
+			}
 		}
 
 		return parent::beforeElementSave($element, $isNew);

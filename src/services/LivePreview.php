@@ -58,7 +58,7 @@ JS;
 		$section->previewTargets = [
 			[
 				'label' => 'Preview',
-				'urlFormat' => '{{ getenv(\'FRONTEND_URL\') }}/api/preview?uid={canonicalUid}&x-craft-live-preview=1',
+				'urlFormat' => '{{ getenv(\'FRONTEND_URL\') }}/api/preview?uid={canonicalUid}&x-craft-live-preview=1&site={site.handle}',
 				'refresh' => true,
 			]
 		];

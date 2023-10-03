@@ -7,6 +7,7 @@ use craft\base\Component;
 use craft\base\Element;
 use craft\db\Query;
 use craft\db\Table;
+use craft\elements\Category;
 use craft\elements\Entry;
 use craft\errors\BusyResourceException;
 use craft\errors\SiteNotFoundException;
@@ -16,6 +17,7 @@ use craft\events\SectionEvent;
 use craft\events\TemplateEvent;
 use craft\helpers\Cp;
 use craft\helpers\ElementHelper;
+use craft\services\Elements;
 use craft\services\Sections;
 use craft\web\twig\TemplateLoaderException;
 use craft\web\View;
@@ -63,6 +65,7 @@ class Revalidator extends Component
 			return;
 
 		$this->push($element);
+		$this->pushRelatedElements($element);
 	}
 
 	public function onAfterRenderTemplate (TemplateEvent $event): void
@@ -182,6 +185,43 @@ class Revalidator extends Component
 			$uris[$i] = $uri[0];
 
 		$config->set($key, $uris);
+	}
+
+	/**
+	 * Queue related URIs for revalidation
+	 *
+	 * @param Element $element
+	 * @param Element $exclude
+	 *
+	 * @return void
+	 * @throws Exception|\yii\base\Exception
+	 */
+
+	public function pushRelatedElements(Element $element, Element $exclude = null): void
+	{
+		/** @var Entry[] */
+		$relatedEntries = (new Entry())
+			->find()
+			->relatedTo($element)
+			->id($exclude ? ['not', $exclude->id] : null)
+			->all();
+
+		/** @var Category[] */
+		$relatedCategories = (new Category())
+			->find()
+			->relatedTo($element)
+			->id($exclude ? ['not', $exclude->id] : null)
+			->all();
+
+		foreach ($relatedEntries as $entry) {
+			$this->push($entry);
+			$this->pushRelatedElements($entry, $element);
+		}
+
+		foreach ($relatedCategories as $category) {
+			$this->push($category);
+			$this->pushRelatedElements($category, $element);
+		}
 	}
 
 	/**

@@ -27,6 +27,7 @@ use yii\base\Event;
 use yii\base\InvalidConfigException;
 use yii\base\NotSupportedException;
 use yii\db\Exception;
+use yii\db\Expression;
 
 class Revalidator extends Component
 {
@@ -191,36 +192,42 @@ class Revalidator extends Component
 	 * Queue related URIs for revalidation
 	 *
 	 * @param Element $element
-	 * @param Element $exclude
+	 * @param array $exclude
 	 *
 	 * @return void
 	 * @throws Exception|\yii\base\Exception
 	 */
 
-	public function pushRelatedElements(Element $element, Element $exclude = null): void
+	public function pushRelatedElements(Element $element, array $exclude = null): void
 	{
-		/** @var Entry[] */
-		$relatedEntries = (new Entry())
-			->find()
-			->relatedTo($element)
-			->id($exclude ? ['not', $exclude->id] : null)
-			->all();
+		$case = "case when sourceId = $element->id then targetId else sourceId end";
+		$relations = (new Query())
+			->select(new Expression("distinct elements.type, group_concat($case) as id"))
+			->leftJoin(Table::ELEMENTS, "elements.id = $case")
+			->from(Table::RELATIONS)
+			->where([
+				'or',
+				['sourceId' => $element->id],
+				['targetId' => $element->id],
+			])
+			->andWhere(['not in', 'sourceId', $exclude ?? []])
+			->andWhere(['not in', 'targetId', $exclude ?? []])
+			->groupBy('elements.type')
+			->pairs();
 
-		/** @var Category[] */
-		$relatedCategories = (new Category())
-			->find()
-			->relatedTo($element)
-			->id($exclude ? ['not', $exclude->id] : null)
-			->all();
+		if (empty($exclude))
+			$exclude = [$element->id];
 
-		foreach ($relatedEntries as $entry) {
-			$this->push($entry);
-			$this->pushRelatedElements($entry, $element);
-		}
+		foreach ($relations as $class => $ids)
+		{
+			$exclude = array_merge($exclude, explode(',', $ids));
+			$elements = (new $class)->find(['id' => $ids])->all();
 
-		foreach ($relatedCategories as $category) {
-			$this->push($category);
-			$this->pushRelatedElements($category, $element);
+			foreach ($elements as $element)
+			{
+				$this->push($element);
+				$this->pushRelatedElements($element, $exclude);
+			}
 		}
 	}
 

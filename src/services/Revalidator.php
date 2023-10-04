@@ -7,7 +7,6 @@ use craft\base\Component;
 use craft\base\Element;
 use craft\db\Query;
 use craft\db\Table;
-use craft\elements\Category;
 use craft\elements\Entry;
 use craft\errors\BusyResourceException;
 use craft\errors\SiteNotFoundException;
@@ -17,7 +16,6 @@ use craft\events\SectionEvent;
 use craft\events\TemplateEvent;
 use craft\helpers\Cp;
 use craft\helpers\ElementHelper;
-use craft\services\Elements;
 use craft\services\Sections;
 use craft\web\twig\TemplateLoaderException;
 use craft\web\View;
@@ -65,8 +63,27 @@ class Revalidator extends Component
 		if (ElementHelper::isDraftOrRevision($element))
 			return;
 
-		$this->push($element);
-		$this->pushRelatedElements($element);
+		$allUris = [];
+
+		$allUris = array_merge($allUris, $this->push($element));
+		$allUris = array_merge($allUris, $this->pushRelatedElements($element));
+
+		// Group by sectionUid
+		$allUris = array_reduce(
+			$allUris,
+			function ($a, $b) {
+				$key = $b[1] ?? 0;
+				if (!array_key_exists($key, $a)) $a[$key] = [];
+				if (!in_array($b[0], $a[$key])) $a[$key][] = $b[0];
+				return $a;
+			},
+			[],
+		);
+
+		// Push each section group as a job
+		$queue = Craft::$app->getQueue();
+		foreach ($allUris as $sectionUid => $uris)
+			$queue->push(new RevalidateJob(compact('sectionUid', 'uris')));
 	}
 
 	public function onAfterRenderTemplate (TemplateEvent $event): void
@@ -197,7 +214,7 @@ class Revalidator extends Component
 	 * @return void
 	 * @throws Exception|\yii\base\Exception
 	 */
-	public function pushRelatedElements(Element $element, array $exclude = null): void
+	private function pushRelatedElements(Element $element, array $exclude = null): array
 	{
 		$case = "case when sourceId = $element->id then targetId else sourceId end";
 		$relations = (new Query())
@@ -221,6 +238,8 @@ class Revalidator extends Component
 		if (empty($exclude))
 			$exclude = [$element->id];
 
+		$uris = [];
+
 		foreach ($relations as $class => $ids)
 		{
 			$exclude = array_merge($exclude, explode(',', $ids));
@@ -228,10 +247,12 @@ class Revalidator extends Component
 
 			foreach ($elements as $element)
 			{
-				$this->push($element);
-				$this->pushRelatedElements($element, $exclude);
+				$uris = array_merge($uris, $this->push($element));
+				$uris = array_merge($uris, $this->pushRelatedElements($element, $exclude));
 			}
 		}
+
+		return $uris;
 	}
 
 	/**
@@ -242,89 +263,26 @@ class Revalidator extends Component
 	 * @return void
 	 * @throws Exception|\yii\base\Exception
 	 */
-	public function push (Element $element): void
+	private function push (Element $element): array
 	{
-		/** @var RevalidateJob $job */
-		[$id, $job] = $this->getJob();
-
+		$uris = [];
+		$sectionUid = null;
 		$uri = $element->uri;
 
-		if (!empty($uri)) $job->uris[] = $uri;
+		if (!empty($uri)) $uris[] = $uri;
 
 		if ($element instanceof Entry)
 		{
 			$sectionUid = Craft::$app->getSections()->getSectionById($element->sectionId)->uid;
-			$job->sectionUid = $sectionUid;
 
 			foreach ($this->getAdditionalURIs($sectionUid) as $uri)
-				$job->uris[] = $uri;
+				$uris[] = $uri;
 		}
 
-		if (empty($id))
-		{
-			$id = Craft::$app->getQueue()->push($job);
-			$this->storeJobId($id);
-		} else $this->updateJob($id, $job);
-	}
-
-	/**
-	 * Get or create the revalidate job
-	 *
-	 * @return array|null
-	 * @throws Exception|\yii\base\Exception
-	 */
-	private function getJob (): ?array
-	{
-		$jobs = (new Query())
-			->select('q.id, q.job')
-			->from(['q' => Table::QUEUE])
-			->innerJoin(['j' => self::$tableName], ['j.jobId' => 'q.id'])
-			->where(['q.attempt' => null])
-			->limit(1)
-			->pairs();
-
-		if (empty($jobs))
-			return [null, new RevalidateJob()];
-
-		[$id, $job] = $jobs[0];
-
-		return [
-			$id,
-			Craft::$app->getQueue()->serializer->unserialize($job),
-		];
-	}
-
-	/**
-	 * Store the revalidate jobs ID
-	 *
-	 * @param int $id
-	 *
-	 * @return void
-	 * @throws Exception
-	 */
-	private function storeJobId (int $id): void
-	{
-		Craft::$app->getDb()->createCommand()
-		           ->insert(self::$tableName, ['jobId' => $id], false)
-		           ->execute();
-	}
-
-	/**
-	 * Update the given revalidate job
-	 *
-	 * @param int           $id
-	 * @param RevalidateJob $job
-	 *
-	 * @return void
-	 * @throws Exception
-	 */
-	private function updateJob (int $id, RevalidateJob $job): void
-	{
-		$job = Craft::$app->getQueue()->serializer->serialize($job);
-
-		Craft::$app->getDb()->createCommand()
-		           ->update(Table::QUEUE, ['job' => $job], ['id' => $id], null, false)
-		           ->execute();
+		return array_map(
+			function ($uri) use ($sectionUid) { return [$uri, $sectionUid]; },
+			$uris,
+		);
 	}
 
 }

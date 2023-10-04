@@ -90,7 +90,7 @@ class Revalidator extends Component
 
 		// Push asset revalidate job
 		if (!empty($this->revalidateAssetIds))
-			$queue->push(new RevalidateAssetJob(['assetIds' => $this->revalidateAssetIds]));
+			$queue->push(new RevalidateAssetJob(['assetIds' => array_unique($this->revalidateAssetIds)]));
 	}
 
 	public function onAfterRenderTemplate (TemplateEvent $event): void
@@ -245,12 +245,15 @@ class Revalidator extends Component
 		if (empty($exclude))
 			$exclude = [$element->id];
 
+		if (empty($relations))
+			return [];
+
 		$uris = [];
 
 		foreach ($relations as $class => $ids)
 		{
 			$exclude = array_merge($exclude, explode(',', $ids));
-			$elements = (new $class)->find(['id' => $ids])->all();
+			$elements = (new $class)->find()->id($ids)->all();
 
 			foreach ($elements as $element)
 			{

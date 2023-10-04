@@ -71,22 +71,22 @@ class RevalidateJob extends BaseJob
 
 		if ($this->volume && $this->folder && $this->filename && $doKey = getenv('DO_API_KEY')) {
 			$headers = [
-                'Content-Type' => 'application/json',
-                'Authorization' => "Bearer $doKey",
-            ];
+				'Content-Type' => 'application/json',
+				'Authorization' => "Bearer $doKey",
+			];
 
-            $response = $client
-                ->get('https://api.digitalocean.com/v2/cdn/endpoints?per_page=200', ['headers' => $headers])
+			$response = $client
+				->get('https://api.digitalocean.com/v2/cdn/endpoints?per_page=200', ['headers' => $headers])
 				->getBody()
-                ->getContents();
+				->getContents();
 
-            $spaces = json_decode($response)->endpoints;
+			$spaces = json_decode($response)->endpoints;
 
-            $spaces = array_values(array_filter($spaces, function ($space) {
-                return $space->endpoint === $this->volume;
-            }));
+			$spaces = array_values(array_filter($spaces, function ($space) {
+				return $space->endpoint === $this->volume;
+			}));
 
-            if (!empty($spaces)) {
+			if (!empty($spaces)) {
 				$id = $spaces[0]->id;
 
 				$client->request('DELETE', "https://api.digitalocean.com/v2/cdn/endpoints/$id/cache", [

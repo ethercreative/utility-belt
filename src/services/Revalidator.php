@@ -197,12 +197,11 @@ class Revalidator extends Component
 	 * @return void
 	 * @throws Exception|\yii\base\Exception
 	 */
-
 	public function pushRelatedElements(Element $element, array $exclude = null): void
 	{
 		$case = "case when sourceId = $element->id then targetId else sourceId end";
 		$relations = (new Query())
-			->select(new Expression("distinct elements.type, group_concat($case) as id"))
+			->select(new Expression("elements.type, group_concat(distinct $case) as id"))
 			->leftJoin(Table::ELEMENTS, "elements.id = $case")
 			->from(Table::RELATIONS)
 			->where([
@@ -212,6 +211,10 @@ class Revalidator extends Component
 			])
 			->andWhere(['not in', 'sourceId', $exclude ?? []])
 			->andWhere(['not in', 'targetId', $exclude ?? []])
+			->andWhere([
+				'revisionId' => null,
+				'draftId' => null,
+			])
 			->groupBy('elements.type')
 			->pairs();
 

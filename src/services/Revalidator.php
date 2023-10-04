@@ -7,6 +7,7 @@ use craft\base\Component;
 use craft\base\Element;
 use craft\db\Query;
 use craft\db\Table;
+use craft\elements\Asset;
 use craft\elements\Category;
 use craft\elements\Entry;
 use craft\errors\BusyResourceException;
@@ -258,6 +259,18 @@ class Revalidator extends Component
 
 			foreach ($this->getAdditionalURIs($sectionUid) as $uri)
 				$job->uris[] = $uri;
+		}
+
+		if ($element instanceof Asset)
+		{
+			$volume = $element->volume;
+			$url = str_replace('https://', '', $volume->getRootUrl());
+			$folder = $volume->fs->subfolder;
+			$filename = $element->filename;
+
+			$job->volume = $url;
+			$job->folder = $folder;
+			$job->filename = $filename;
 		}
 
 		if (empty($id))

@@ -7,6 +7,7 @@ use craft\base\Component;
 use craft\base\Element;
 use craft\db\Query;
 use craft\db\Table;
+use craft\elements\Asset;
 use craft\elements\Entry;
 use craft\errors\BusyResourceException;
 use craft\errors\SiteNotFoundException;
@@ -19,6 +20,7 @@ use craft\helpers\ElementHelper;
 use craft\services\Sections;
 use craft\web\twig\TemplateLoaderException;
 use craft\web\View;
+use ether\utilitybelt\jobs\RevalidateAssetJob;
 use ether\utilitybelt\jobs\RevalidateJob;
 use yii\base\ErrorException;
 use yii\base\Event;
@@ -31,6 +33,7 @@ class Revalidator extends Component
 {
 
 	public static $tableName = '{{%b_revalidate_jobs}}';
+	private array $revalidateAssetIds = [];
 
 	public function init (): void
 	{
@@ -84,6 +87,10 @@ class Revalidator extends Component
 		$queue = Craft::$app->getQueue();
 		foreach ($allUris as $sectionUid => $uris)
 			$queue->push(new RevalidateJob(compact('sectionUid', 'uris')));
+
+		// Push asset revalidate job
+		if (!empty($this->revalidateAssetIds))
+			$queue->push(new RevalidateAssetJob(['assetIds' => $this->revalidateAssetIds]));
 	}
 
 	public function onAfterRenderTemplate (TemplateEvent $event): void
@@ -278,6 +285,9 @@ class Revalidator extends Component
 			foreach ($this->getAdditionalURIs($sectionUid) as $uri)
 				$uris[] = $uri;
 		}
+
+		if ($element instanceof Asset)
+			$this->revalidateAssetIds[] = $element->id;
 
 		return array_map(
 			function ($uri) use ($sectionUid) { return [$uri, $sectionUid]; },

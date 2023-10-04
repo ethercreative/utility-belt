@@ -11,9 +11,6 @@ class RevalidateJob extends BaseJob
 
 	public $sectionUid = null;
 	public $uris = [];
-	public $volume = null;
-	public $folder = null;
-	public $filename = null;
 
 	protected function defaultDescription (): string
 	{
@@ -67,35 +64,6 @@ class RevalidateJob extends BaseJob
 					$queue->setProgress(++$i / $total * 100, $uri);
 				}
 			}
-		}
-
-		if ($this->volume && $this->folder && $this->filename && $doKey = getenv('DO_API_KEY')) {
-			$headers = [
-				'Content-Type' => 'application/json',
-				'Authorization' => "Bearer $doKey",
-			];
-
-			$response = $client
-				->get('https://api.digitalocean.com/v2/cdn/endpoints?per_page=200', ['headers' => $headers])
-				->getBody()
-				->getContents();
-
-			$spaces = json_decode($response)->endpoints;
-
-			$spaces = array_values(array_filter($spaces, function ($space) {
-				return $space->endpoint === $this->volume;
-			}));
-
-			if (!empty($spaces)) {
-				$id = $spaces[0]->id;
-
-				$client->request('DELETE', "https://api.digitalocean.com/v2/cdn/endpoints/$id/cache", [
-					'headers' => $headers,
-					'json' => ['files' => ["$this->folder/$this->filename", "$this->folder/*/$this->filename"]]
-				]);
-			}
-
-			$queue->setProgress(100);
 		}
 	}
 

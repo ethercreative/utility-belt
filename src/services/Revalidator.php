@@ -235,11 +235,11 @@ class Revalidator extends Component
 			])
 			->andWhere(['not in', 'sourceId', $exclude ?? []])
 			->andWhere(['not in', 'targetId', $exclude ?? []])
+			->andWhere(['not in', 'elements.type', ['craft\\elements\\Asset']])
 			->andWhere([
 				'revisionId' => null,
 				'draftId' => null,
 			])
-			->andWhere(['!=', 'elements.type', 'Asset'])
 			->groupBy('elements.type')
 			->pairs();
 

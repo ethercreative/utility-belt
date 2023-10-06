@@ -22,8 +22,6 @@ class RevalidateAssetJob extends BaseJob
 
 		if (empty($doKey)) return;
 
-		sleep(5);
-
 		$client = Craft::createGuzzleClient();
 		$assets = Asset::find()->id($this->assetIds)->all();
 
@@ -36,6 +34,7 @@ class RevalidateAssetJob extends BaseJob
 			->get('https://api.digitalocean.com/v2/cdn/endpoints?per_page=200', ['headers' => $headers])
 			->getBody()
 			->getContents();
+		sleep(1);
 
 		$allSpaces = json_decode($response)->endpoints;
 		$spaceFiles = [];
@@ -71,6 +70,7 @@ class RevalidateAssetJob extends BaseJob
 			]);
 
 			$queue->setProgress(++$i / $total * 100);
+			sleep(1);
 		}
 	}
 

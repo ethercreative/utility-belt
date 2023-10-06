@@ -24,8 +24,6 @@ class RevalidateAssetJob extends BaseJob
 
 		$client = Craft::createGuzzleClient();
 		$assets = Asset::find()->id($this->assetIds)->all();
-		$total = count($this->assetIds);
-		$i = 0;
 
 		$headers = [
 			'Content-Type' => 'application/json',
@@ -38,6 +36,7 @@ class RevalidateAssetJob extends BaseJob
 			->getContents();
 
 		$allSpaces = json_decode($response)->endpoints;
+		$spaceFiles = [];
 
 		foreach ($assets as $asset)
 		{
@@ -51,13 +50,25 @@ class RevalidateAssetJob extends BaseJob
 				$id = $spaces[0]->id;
 				$folder = $volume->fs->subfolder;
 
-				$client->request('DELETE', "https://api.digitalocean.com/v2/cdn/endpoints/$id/cache", [
-					'headers' => $headers,
-					'json' => ['files' => ["$folder/$asset->filename", "$folder/*/$asset->filename"]]
-				]);
-			}
+				if (!$spaceFiles[$id]) {
+					$spaceFiles[$id] = [];
+				}
 
-			$queue->setProgress(++$i / $total * 100, $asset->filename);
+				$spaceFiles[$id][] = "$folder/$asset->filename";
+				$spaceFiles[$id][] = "$folder/*/$asset->filename";
+			}
+		}
+
+		$total = count($spaceFiles);
+		$i = 0;
+
+		foreach ($spaceFiles as $id => $files) {
+			$client->request('DELETE', "https://api.digitalocean.com/v2/cdn/endpoints/$id/cache", [
+				'headers' => $headers,
+				'json' => ['files' => $files]
+			]);
+
+			$queue->setProgress(++$i / $total * 100);
 		}
 	}
 

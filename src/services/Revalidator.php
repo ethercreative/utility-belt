@@ -289,7 +289,7 @@ class Revalidator extends Component
 				$uris[] = $uri;
 		}
 
-		if ($element instanceof Asset && !$element->isNew)
+		if ($element instanceof Asset && !$element->isFresh)
 			$this->revalidateAssetIds[] = $element->id;
 
 		return array_map(

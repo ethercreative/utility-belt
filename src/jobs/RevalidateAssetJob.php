@@ -22,6 +22,8 @@ class RevalidateAssetJob extends BaseJob
 
 		if (empty($doKey)) return;
 
+		sleep(5);
+
 		$client = Craft::createGuzzleClient();
 		$assets = Asset::find()->id($this->assetIds)->all();
 

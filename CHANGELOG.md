@@ -1,3 +1,10 @@
+## 4.2.0 - 2023-10-06
+### Added
+- Assets will have their CDN cache cleared when edited
+
+### Improved
+- Saving an element will trigger revalidation for all related elements
+
 ## 4.1.1 - 2023-07-21
 ### Fixed
 - Fix issue creating new sections

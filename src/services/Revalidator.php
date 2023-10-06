@@ -239,6 +239,7 @@ class Revalidator extends Component
 				'revisionId' => null,
 				'draftId' => null,
 			])
+			->andWhere(['!=', 'elements.type', 'Asset'])
 			->groupBy('elements.type')
 			->pairs();
 

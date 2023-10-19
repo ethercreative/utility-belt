@@ -204,6 +204,8 @@ class LinkField extends Field
 			}
 		}
 
+		$element->{$this->handle} = $value;
+
 		return parent::beforeElementSave($element, $isNew);
 	}
 

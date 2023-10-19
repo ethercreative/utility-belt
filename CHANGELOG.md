@@ -1,3 +1,7 @@
+## 4.2.1 - 2023-10-19
+### Fixed
+- Fix link field not caching element details on save
+
 ## 4.2.0 - 2023-10-06
 ### Added
 - Assets will have their CDN cache cleared when edited

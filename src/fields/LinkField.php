@@ -195,7 +195,8 @@ class LinkField extends Field
 		{
 			/** @var ElementInterface $type */
 			$type = $value->type;
-			$target = $type::findOne($value->elementId);
+			$site = Craft::$app->request->getQueryParam('site') ?? Craft::$app->sites->currentSite->handle;
+			$target = $type::find()->site($site)->id($value->elementId)->one();
 
 			if ($target) {
 				$value->elementText = $target->title;

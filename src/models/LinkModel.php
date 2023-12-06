@@ -2,6 +2,7 @@
 
 namespace ether\utilitybelt\models;
 
+use Craft;
 use craft\base\ElementInterface;
 use craft\base\Model;
 use ether\utilitybelt\fields\LinkField;
@@ -33,7 +34,8 @@ class LinkModel extends Model
 		if (empty($this->elementId) || in_array($this->type, LinkField::NON_ELEMENT_TYPES))
 			return null;
 
-		return $this->type::findOne($this->elementId);
+		$site = Craft::$app->request->getQueryParam('site') ?? Craft::$app->sites->currentSite->handle;
+		return $this->type::find()->site($site)->id($this->elementId)->one();
 	}
 
 	public function isEmpty (): bool

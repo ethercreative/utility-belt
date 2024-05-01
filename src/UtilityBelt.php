@@ -104,10 +104,9 @@ class UtilityBelt extends Plugin
 		try {
 			$fields = Craft::$app->getFields();
 			$fields->deleteFieldById($fields->getFieldByHandle('seo')->id);
-			$fields->deleteGroupById(FieldGroup::findOne(['name' => 'SEO'])->id);
+//			$fields->deleteGroupById(FieldGroup::findOne(['name' => 'SEO'])->id);
 		} /** @noinspection PhpStatementHasEmptyBodyInspection */ finally {}
 
-		Craft::$app->getPlugins()->uninstallPlugin('logs');
 		Craft::$app->getPlugins()->uninstallPlugin('seo');
 	}
 
@@ -115,19 +114,18 @@ class UtilityBelt extends Plugin
 	{
 		if ($event->plugin->getHandle() !== $this->getHandle()) return;
 
-		Craft::$app->getPlugins()->installPlugin('logs');
 		Craft::$app->getPlugins()->installPlugin('seo');
 
 		$fields = Craft::$app->getFields();
 
-		$group = new \craft\models\FieldGroup(['name' => 'SEO']);
-		$fields->saveGroup($group);
+//		$group = new \craft\models\FieldGroup(['name' => 'SEO']);
+//		$fields->saveGroup($group);
 
 		$seoField = $fields->createField([
 			'type' => SeoField::class,
 			'name' => 'SEO',
 			'handle' => 'seo',
-			'groupId' => $group->id,
+//			'groupId' => $group->id,
 		]);
 		$fields->saveField($seoField);
 	}
@@ -171,20 +169,20 @@ class UtilityBelt extends Plugin
 
 	public function onRegisterFieldTypes (RegisterComponentTypesEvent $event): void
 	{
-		$event->types[] = LinkField::class;
+//		$event->types[] = LinkField::class;
 	}
 
 	public function onAfterElementSave (ModelEvent $event): void
 	{
 		/** @var Element $element */
-		$element = $event->sender;
-
-		if (ElementHelper::isDraftOrRevision($element)) return;
-
-		Craft::$app->getQueue()->push(new RegenerateLinkCacheJob([
-			'elementType' => $element::class,
-			'targetId' => $element->id,
-		]));
+//		$element = $event->sender;
+//
+//		if (ElementHelper::isDraftOrRevision($element)) return;
+//
+//		Craft::$app->getQueue()->push(new RegenerateLinkCacheJob([
+//			'elementType' => $element::class,
+//			'targetId' => $element->id,
+//		]));
 	}
 
 }

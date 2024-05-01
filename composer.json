@@ -5,8 +5,7 @@
   "license": "GPL-3.0-or-later",
   "minimum-stability": "dev",
   "require": {
-    "craftcms/cms": "^4",
-    "ether/logs": "*",
+    "craftcms/cms": "^5",
     "ether/seo": "*"
   },
   "autoload": {

@@ -36,7 +36,7 @@ class RevalidateJob extends BaseJob
 
 		if (!empty($this->sectionUid))
 		{
-			$section = Craft::$app->getSections()->getSectionByUid($this->sectionUid);
+			$section = Craft::$app->getEntries()->getSectionByUid($this->sectionUid);
 			$entriesInSection = Entry::find()->sectionId($section->id)->count();
 
 			$urisWithTemplates = 0;

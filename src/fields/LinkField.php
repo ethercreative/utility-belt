@@ -118,7 +118,7 @@ class LinkField extends Field
 		return (bool) $value?->isEmpty();
 	}
 
-	protected function inputHtml ($value, ElementInterface $element = null): string
+	protected function inputHtml ($value, ?ElementInterface $element, bool $inline): string
 	{
 		$view = Craft::$app->getView();
 		$view->registerAssetBundle(LinkFieldAsset::class, View::POS_END);
@@ -329,7 +329,7 @@ class LinkField extends Field
 	{
 		return join('_', array_filter([
 			'field',
-			$this->columnPrefix,
+//			$this->columnPrefix,
 			$prefix,
 			$fieldHandle,
 			$handle,
@@ -345,7 +345,7 @@ class LinkField extends Field
 	private function _getContentTable (): ?array
 	{
 		if ($this->context === 'global')
-			return [Table::CONTENT, null];
+			return [Table::ELEMENTS_SITES, null];
 
 		if (str_starts_with($this->context, 'matrixBlockType'))
 		{

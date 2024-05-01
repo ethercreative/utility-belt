@@ -17,7 +17,7 @@ use craft\events\SectionEvent;
 use craft\events\TemplateEvent;
 use craft\helpers\Cp;
 use craft\helpers\ElementHelper;
-use craft\services\Sections;
+use craft\services\Entries;
 use craft\web\twig\TemplateLoaderException;
 use craft\web\View;
 use ether\utilitybelt\jobs\RevalidateAssetJob;
@@ -52,8 +52,8 @@ class Revalidator extends Component
 		);
 
 		Event::on(
-			Sections::class,
-			Sections::EVENT_BEFORE_SAVE_SECTION,
+			Entries::class,
+			Entries::EVENT_BEFORE_SAVE_SECTION,
 			[$this, 'onBeforeSectionSave']
 		);
 	}
@@ -126,7 +126,7 @@ class Revalidator extends Component
 				'siteId' => Craft::$app->getSites()->getCurrentSite()->id,
 			]);
 		} else {
-			$sectionUid = Craft::$app->getSections()->getSectionById($sectionId)->uid;
+			$sectionUid = Craft::$app->getEntries()->getSectionById($sectionId)->uid;
 			$markup = Cp::editableTableFieldHtml([
 				'label' => 'Additional Revalidate URIs',
 				'instructions' => 'Any additional URIs that need to be revalidated when this entry changes (i.e. indexes)',
@@ -282,9 +282,9 @@ class Revalidator extends Component
 
 		if (!empty($uri)) $uris[] = $uri;
 
-		if ($element instanceof Entry)
+		if ($element instanceof Entry && $element->sectionId)
 		{
-			$sectionUid = Craft::$app->getSections()->getSectionById($element->sectionId)->uid;
+			$sectionUid = Craft::$app->getEntries()->getSectionById($element->sectionId)->uid;
 
 			foreach ($this->getAdditionalURIs($sectionUid) as $uri)
 				$uris[] = $uri;

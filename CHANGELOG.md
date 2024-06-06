@@ -1,3 +1,7 @@
+## 4.2.2 - 2024-06-06
+### Fixed
+- Fix double `//` in preview urls
+
 ## 4.2.1 - 2023-10-19
 ### Fixed
 - Fix link field not caching element details on save

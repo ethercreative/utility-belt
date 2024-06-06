@@ -1,4 +1,4 @@
-## 4.2.2 - 2024-06-06
+## 5.0.0-beta.1 - 2024-06-06
 ### Fixed
 - Fix double `//` in preview urls
 

@@ -1,3 +1,7 @@
+## 5.0.0-beta.2 - 2024-12-04
+### Fixed
+- Fix broken revalidation url UI
+
 ## 5.0.0-beta.1 - 2024-06-06
 ### Fixed
 - Fix double `//` in preview urls

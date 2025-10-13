@@ -145,11 +145,7 @@ class Revalidator extends Component
 			]);
 		}
 
-		$event->output = preg_replace(
-			'/<\/div>\s*?<\/div>\s*?<\/div>\s*?<\/div><!-- #content-container -->/m',
-			$markup . '</div></div></div></div><!-- #content-container -->',
-			$event->output
-		);
+		$event->output .= $markup;
 	}
 
 	/**

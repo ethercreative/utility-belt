@@ -54,23 +54,6 @@ JS;
 	{
 		/** @var Section $section */
 		$section = $event->sender;
-		$siteSettings = $section->getSiteSettings();
-
-		if (!empty($siteSettings)) {
-			$hasAnyUrls = false;
-
-			foreach ($siteSettings as $settings) {
-				if ($settings->hasUrls) {
-					$hasAnyUrls = true;
-					break;
-				}
-			}
-
-			if (!$hasAnyUrls) {
-				$section->previewTargets = [];
-				return;
-			}
-		}
 
 		$section->previewTargets = [
 			[

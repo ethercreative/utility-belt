@@ -28,6 +28,7 @@ use yii\base\InvalidConfigException;
 use yii\base\NotSupportedException;
 use yii\db\Exception;
 use yii\db\Expression;
+use DateTime;
 
 class Revalidator extends Component
 {
@@ -84,13 +85,51 @@ class Revalidator extends Component
 		);
 
 		// Push each section group as a job
-		$queue = Craft::$app->getQueue();
-		foreach ($allUris as $sectionUid => $uris)
-			$queue->push(new RevalidateJob(compact('sectionUid', 'uris')));
+		$this->queueRevalidationJobs($allUris, $element);
 
 		// Push asset revalidate job
 		if (!empty($this->revalidateAssetIds))
-			$queue->push(new RevalidateAssetJob(['assetIds' => array_unique($this->revalidateAssetIds)]));
+			Craft::$app->getQueue()->push(new RevalidateAssetJob(['assetIds' => array_unique($this->revalidateAssetIds)]));
+	}
+
+	private function queueRevalidationJobs (array $allUris, Element $element): void
+	{
+		$queue = Craft::$app->getQueue();
+
+		foreach ($allUris as $sectionUid => $uris)
+			$queue->push(new RevalidateJob(compact('sectionUid', 'uris')));
+
+		if (!$element instanceof Entry)
+			return;
+
+		$futureTimestamps = $this->getFutureEntryTransitionTimestamps($element);
+
+		foreach ($futureTimestamps as $timestamp)
+		{
+			$delay = max(1, $timestamp - time());
+
+			foreach ($allUris as $sectionUid => $uris)
+				$queue->delay($delay)->push(new RevalidateJob(compact('sectionUid', 'uris')));
+		}
+	}
+
+	private function getFutureEntryTransitionTimestamps (Entry $entry): array
+	{
+		$timestamps = [];
+		$now = time();
+
+		foreach ([$entry->postDate, $entry->expiryDate] as $date)
+		{
+			if (!$date instanceof DateTime)
+				continue;
+
+			$timestamp = $date->getTimestamp();
+
+			if ($timestamp > $now)
+				$timestamps[] = $timestamp;
+		}
+
+		return array_values(array_unique($timestamps));
 	}
 
 	public function onAfterRenderTemplate (TemplateEvent $event): void
@@ -217,7 +256,7 @@ class Revalidator extends Component
 	 * @return void
 	 * @throws Exception|\yii\base\Exception
 	 */
-	private function pushRelatedElements(Element $element, array $exclude = null): array
+	private function pushRelatedElements(Element $element, ?array $exclude = null): array
 	{
 		$case = "case when sourceId = $element->id then targetId else sourceId end";
 		$relations = (new Query())
